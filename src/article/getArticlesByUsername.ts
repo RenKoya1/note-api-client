@@ -9,7 +9,7 @@ export async function getArticlesByUsername(
     username: string;
     page?: number;
   }
-): Promise<string> {
+): Promise<any> {
   const url = `${this.BASE_URL}/v2/creators/${encodeURIComponent(
     username
   )}/contents`;
@@ -18,5 +18,5 @@ export async function getArticlesByUsername(
     page,
   };
 
-  return this.get<string>(url, params);
+  return this.get<any>(url, params);
 }

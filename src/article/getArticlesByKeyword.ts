@@ -11,12 +11,12 @@ export async function getArticlesByKeyword(
     size?: number;
     start?: number;
   }
-): Promise<string> {
+): Promise<any[]> {
   const params = {
     q: keyword,
     size,
     start,
   };
 
-  return this.get<string>(`${this.BASE_URL}/v3/searches`, params);
+  return this.get<any[]>(`${this.BASE_URL}/v3/searches`, params);
 }
