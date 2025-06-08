@@ -7,6 +7,6 @@ export async function getArticleDetail(
   }: {
     key: string;
   }
-): Promise<any[]> {
-  return this.get<any[]>(`${this.BASE_URL}/v3/notes/${key}`, {});
+): Promise<any> {
+  return this.get<any>(`${this.BASE_URL}/v3/notes/${key}`, {});
 }
