@@ -18,10 +18,10 @@ npm install note-api-client
 import { NoteAPIClient } from "note-api-client";
 const client = new NoteAPIClient();
 
-// Get domain rank
+// Get Articles by username
 client.getArticlesByUsername({ username: "test_usr" });
 
-// Get keyword data
+// Get Articles by Keyword
 client.getArticlesByKeyword({ phrase: "AI" });
 ```
 
