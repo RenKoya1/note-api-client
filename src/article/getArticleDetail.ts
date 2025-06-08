@@ -8,5 +8,5 @@ export async function getArticleDetail(
     key: string;
   }
 ): Promise<string> {
-  return this.get<string>(`${this.BASE_URL}/v3/notes/${id}`, {});
+  return this.get<string>(`${this.BASE_URL}/v3/notes/${key}`, {});
 }
