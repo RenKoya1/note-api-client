@@ -4,6 +4,8 @@ import { getArticleDetail } from "../article/getArticleDetail";
 import { searchArticlesByUsername } from "../article/searchArticlesByUsername";
 import { saveDraft } from "../article/saveDraft";
 import { searchUsersByKeyword } from "../user/searchUsersByKeyword";
+import { getFollowings } from "../user/getFollowings";
+import { getFollowers } from "../user/getFollowers";
 import { getUserDetail } from "../user/getUserDetail";
 
 export class NoteAPIClient {
@@ -59,4 +61,6 @@ export class NoteAPIClient {
   public saveDraft = saveDraft;
   public searchUsersByKeyword = searchUsersByKeyword;
   public getUserDetail = getUserDetail;
+  public getFollowings = getFollowings;
+  public getFollowers = getFollowers;
 }

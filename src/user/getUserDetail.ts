@@ -8,5 +8,5 @@ export async function getUserDetail(
     username: string;
   }
 ): Promise<any> {
-  return this.get<any>(`${this.BASE_URL}/v2/creators//${username}`, {});
+  return this.get<any>(`${this.BASE_URL}/v2/creators/${username}/list`, {});
 }
