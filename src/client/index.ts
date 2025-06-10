@@ -4,6 +4,7 @@ import { getArticleDetail } from "../article/getArticleDetail";
 import { searchArticlesByUsername } from "../article/searchArticlesByUsername";
 import { saveDraft } from "../article/saveDraft";
 import { searchUsersByKeyword } from "../user/searchUsersByKeyword";
+import { getUserDetail } from "../user/getUserDetail";
 
 export class NoteAPIClient {
   private client: AxiosInstance;
@@ -57,4 +58,5 @@ export class NoteAPIClient {
   public searchArticlesByUsername = searchArticlesByUsername;
   public saveDraft = saveDraft;
   public searchUsersByKeyword = searchUsersByKeyword;
+  public getUserDetail = getUserDetail;
 }
