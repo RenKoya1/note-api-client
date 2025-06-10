@@ -1,6 +1,6 @@
 import { NoteAPIClient } from "../client";
 
-export async function getArticlesByKeyword(
+export async function searchArticlesByKeyword(
   this: NoteAPIClient,
   {
     keyword,

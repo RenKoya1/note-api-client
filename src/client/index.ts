@@ -1,8 +1,9 @@
 import axios, { type AxiosInstance } from "axios";
-import { getArticlesByKeyword } from "../article/getArticlesByKeyword";
+import { searchArticlesByKeyword } from "../article/searchArticlesByKeyword";
 import { getArticleDetail } from "../article/getArticleDetail";
-import { getArticlesByUsername } from "../article/getArticlesByUsername";
+import { searchArticlesByUsername } from "../article/searchArticlesByUsername";
 import { saveDraft } from "../article/saveDraft";
+import { searchUsersByKeyword } from "../user/searchUsersByKeyword";
 
 export class NoteAPIClient {
   private client: AxiosInstance;
@@ -50,9 +51,10 @@ export class NoteAPIClient {
     }
   }
 
-  public getArticlesByKeyword = getArticlesByKeyword;
+  public searchArticlesByKeyword = searchArticlesByKeyword;
   public getArticleDetail = getArticleDetail;
 
-  public getArticlesByUsername = getArticlesByUsername;
+  public searchArticlesByUsername = searchArticlesByUsername;
   public saveDraft = saveDraft;
+  public searchUsersByKeyword = searchUsersByKeyword;
 }

@@ -1,7 +1,7 @@
 import { client } from "..";
 
 client
-  .getArticlesByKeyword({
+  .searchUsersByKeyword({
     keyword: "AI",
   })
   .then((data: any) => {

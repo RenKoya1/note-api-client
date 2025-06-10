@@ -19,10 +19,10 @@ import { NoteAPIClient } from "note-api-client";
 const client = new NoteAPIClient();
 
 // Get Articles by username
-client.getArticlesByUsername({ username: "test_usr" });
+client.searchArticlesByUsername({ username: "test_usr" });
 
 // Get Articles by Keyword
-client.getArticlesByKeyword({ phrase: "AI" });
+client.searchArticlesByKeyword({ phrase: "AI" });
 ```
 
 ## Contributing

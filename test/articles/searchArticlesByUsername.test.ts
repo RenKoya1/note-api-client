@@ -1,7 +1,7 @@
 import { client } from "..";
 
 client
-  .getArticlesByUsername({
+  .searchArticlesByUsername({
     username: "ego_station",
   })
   .then((data: any) => {
