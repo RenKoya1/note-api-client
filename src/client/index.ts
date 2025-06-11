@@ -17,6 +17,7 @@ import { searchNotesByHashtag } from "../note/searchNotesByHashtag";
 import { getHashtagDetail } from "../hashtag/getHashtagDetail";
 import { getContests } from "../contest/getContests";
 import { getRecommendMetadata } from "../recommend/getRecommendMetadata";
+import { getMkitLayouts } from "../mkit/getMkitLayouts";
 
 export class NoteAPIClient {
   private client: AxiosInstance;
@@ -83,4 +84,5 @@ export class NoteAPIClient {
   public getHashtagDetail = getHashtagDetail;
   public getContests = getContests;
   public getRecommendMetadata = getRecommendMetadata;
+  public getMkitLayouts = getMkitLayouts;
 }
