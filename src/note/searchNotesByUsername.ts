@@ -1,6 +1,6 @@
 import { NoteAPIClient } from "../client";
 
-export async function searchArticlesByUsername(
+export async function searchNotesByUsername(
   this: NoteAPIClient,
   {
     username,

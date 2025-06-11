@@ -1,8 +1,8 @@
 import { client } from "..";
 
 client
-  .getArticleDetail({
-    key: "n1a0b26f944f4",
+  .getMagazineDetail({
+    key: "m891c62a08b36",
   })
   .then((data: any) => {
     console.log(data);

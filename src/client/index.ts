@@ -1,14 +1,15 @@
 import axios, { type AxiosInstance } from "axios";
-import { searchArticlesByKeyword } from "../articles/searchArticlesByKeyword";
-import { getArticleDetail } from "../articles/getArticleDetail";
-import { searchArticlesByUsername } from "../articles/searchArticlesByUsername";
-import { saveDraft } from "../articles/saveDraft";
-import { searchUsersByKeyword } from "../users/searchUsersByKeyword";
-import { getFollowings } from "../users/getFollowings";
-import { getFollowers } from "../users/getFollowers";
-import { getUserDetail } from "../users/getUserDetail";
-import { getComments } from "../articles/getComments";
-import { searchMagazinesByKeyword } from "../magazines/searchMagazinesByKeyword";
+import { searchNotesByKeyword } from "../note/searchNotesByKeyword";
+import { getNoteDetail } from "../note/getNoteDetail";
+import { searchNotesByUsername } from "../note/searchNotesByUsername";
+import { saveDraft } from "../note/saveDraft";
+import { searchUsersByKeyword } from "../user/searchUsersByKeyword";
+import { getFollowings } from "../user/getFollowings";
+import { getFollowers } from "../user/getFollowers";
+import { getUserDetail } from "../user/getUserDetail";
+import { getComments } from "../note/getComments";
+import { searchMagazinesByKeyword } from "../magazine/searchMagazinesByKeyword";
+import { getMagazineDetail } from "../magazine/getMagazineDetail";
 
 export class NoteAPIClient {
   private client: AxiosInstance;
@@ -56,10 +57,10 @@ export class NoteAPIClient {
     }
   }
 
-  public searchArticlesByKeyword = searchArticlesByKeyword;
-  public getArticleDetail = getArticleDetail;
+  public searchNotesByKeyword = searchNotesByKeyword;
+  public getNoteDetail = getNoteDetail;
 
-  public searchArticlesByUsername = searchArticlesByUsername;
+  public searchNotesByUsername = searchNotesByUsername;
   public saveDraft = saveDraft;
   public searchUsersByKeyword = searchUsersByKeyword;
   public getUserDetail = getUserDetail;
@@ -67,4 +68,5 @@ export class NoteAPIClient {
   public getFollowers = getFollowers;
   public getComments = getComments;
   public searchMagazinesByKeyword = searchMagazinesByKeyword;
+  public getMagazineDetail = getMagazineDetail;
 }

@@ -5,5 +5,5 @@ client
     keyword: "AI",
   })
   .then((data: any) => {
-    console.log(data);
+    console.log(data.magazines);
   });
