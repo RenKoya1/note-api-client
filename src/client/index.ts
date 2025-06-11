@@ -15,6 +15,8 @@ import { searchNotesByCategory } from "../note/searchNotesByCategory";
 import { getHashtags } from "../hashtag/getHastags";
 import { searchNotesByHashtag } from "../note/searchNotesByHashtag";
 import { getHashtagDetail } from "../hashtag/getHashtagDetail";
+import { getContests } from "../contest/getContests";
+import { getRecommendMetadata } from "../recommend/getRecommendMetadata";
 
 export class NoteAPIClient {
   private client: AxiosInstance;
@@ -79,4 +81,6 @@ export class NoteAPIClient {
   public getHashtags = getHashtags;
   public searchNotesByHashtag = searchNotesByHashtag;
   public getHashtagDetail = getHashtagDetail;
+  public getContests = getContests;
+  public getRecommendMetadata = getRecommendMetadata;
 }
