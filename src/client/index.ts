@@ -7,7 +7,7 @@ import { searchUsersByKeyword } from "../user/searchUsersByKeyword";
 import { getFollowings } from "../user/getFollowings";
 import { getFollowers } from "../user/getFollowers";
 import { getUserDetail } from "../user/getUserDetail";
-import { getComments } from "../article/getComment";
+import { getComments } from "../article/getComments";
 
 export class NoteAPIClient {
   private client: AxiosInstance;
