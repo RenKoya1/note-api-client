@@ -10,6 +10,8 @@ import { getUserDetail } from "../user/getUserDetail";
 import { getComments } from "../note/getComments";
 import { searchMagazinesByKeyword } from "../magazine/searchMagazinesByKeyword";
 import { getMagazineDetail } from "../magazine/getMagazineDetail";
+import { getCategories } from "../category/getCategories";
+import { searchNotesByCategory } from "../note/searchNotesByCategory";
 
 export class NoteAPIClient {
   private client: AxiosInstance;
@@ -69,4 +71,6 @@ export class NoteAPIClient {
   public getComments = getComments;
   public searchMagazinesByKeyword = searchMagazinesByKeyword;
   public getMagazineDetail = getMagazineDetail;
+  public getCategories = getCategories;
+  public searchNotesByCategory = searchNotesByCategory;
 }
