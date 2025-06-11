@@ -1,20 +1,20 @@
 import { NoteAPIClient } from "../client";
 
-export async function searchNotesByCategory(
+export async function searchNotesByHashtag(
   this: NoteAPIClient,
   {
-    category,
+    hashtag,
     page = 1,
-    order = "new",
+    order = "popular",
   }: {
-    category: string;
+    hashtag: string;
     page?: number;
     order?: "new" | "popular" | "hot";
   }
 ): Promise<any> {
-  const url = `${this.BASE_URL}/v1/categories/${category}`;
+  const url = `${this.BASE_URL}/v3/hashtags/${hashtag}/notes`;
   const params = {
-    note_intro_only: "true",
+    paid_only: "false",
     order: order,
     page: page,
   };

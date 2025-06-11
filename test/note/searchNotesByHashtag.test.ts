@@ -1,9 +1,9 @@
 import { client } from "..";
 
 client
-  .searchNotesByCategory({
-    category: "tech",
-    order: "popular",
+  .searchNotesByHashtag({
+    hashtag: "AI",
+    order: "new",
   })
   .then((data: any) => {
     console.log(data);

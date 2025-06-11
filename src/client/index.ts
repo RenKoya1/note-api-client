@@ -12,6 +12,8 @@ import { searchMagazinesByKeyword } from "../magazine/searchMagazinesByKeyword";
 import { getMagazineDetail } from "../magazine/getMagazineDetail";
 import { getCategories } from "../category/getCategories";
 import { searchNotesByCategory } from "../note/searchNotesByCategory";
+import { getHashtags } from "../hashtag/getHastags";
+import { searchNotesByHashtag } from "../note/searchNotesByHashtag";
 
 export class NoteAPIClient {
   private client: AxiosInstance;
@@ -73,4 +75,6 @@ export class NoteAPIClient {
   public getMagazineDetail = getMagazineDetail;
   public getCategories = getCategories;
   public searchNotesByCategory = searchNotesByCategory;
+  public getHashtags = getHashtags;
+  public searchNotesByHashtag = searchNotesByHashtag;
 }
