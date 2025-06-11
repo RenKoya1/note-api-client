@@ -1,6 +1,6 @@
 import { NoteAPIClient } from "../client";
 
-export async function searchArticlesByKeyword(
+export async function searchMagazinesByKeyword(
   this: NoteAPIClient,
   {
     keyword,
@@ -16,6 +16,7 @@ export async function searchArticlesByKeyword(
     q: keyword,
     size,
     start,
+    context: "magazine",
   };
 
   return this.get<any>(`${this.BASE_URL}/v3/searches`, params);

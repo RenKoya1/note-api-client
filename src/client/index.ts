@@ -1,13 +1,14 @@
 import axios, { type AxiosInstance } from "axios";
-import { searchArticlesByKeyword } from "../article/searchArticlesByKeyword";
-import { getArticleDetail } from "../article/getArticleDetail";
-import { searchArticlesByUsername } from "../article/searchArticlesByUsername";
-import { saveDraft } from "../article/saveDraft";
-import { searchUsersByKeyword } from "../user/searchUsersByKeyword";
-import { getFollowings } from "../user/getFollowings";
-import { getFollowers } from "../user/getFollowers";
-import { getUserDetail } from "../user/getUserDetail";
-import { getComments } from "../article/getComments";
+import { searchArticlesByKeyword } from "../articles/searchArticlesByKeyword";
+import { getArticleDetail } from "../articles/getArticleDetail";
+import { searchArticlesByUsername } from "../articles/searchArticlesByUsername";
+import { saveDraft } from "../articles/saveDraft";
+import { searchUsersByKeyword } from "../users/searchUsersByKeyword";
+import { getFollowings } from "../users/getFollowings";
+import { getFollowers } from "../users/getFollowers";
+import { getUserDetail } from "../users/getUserDetail";
+import { getComments } from "../articles/getComments";
+import { searchMagazinesByKeyword } from "../magazines/searchMagazinesByKeyword";
 
 export class NoteAPIClient {
   private client: AxiosInstance;
@@ -65,4 +66,5 @@ export class NoteAPIClient {
   public getFollowings = getFollowings;
   public getFollowers = getFollowers;
   public getComments = getComments;
+  public searchMagazinesByKeyword = searchMagazinesByKeyword;
 }
