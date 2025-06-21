@@ -1,4 +1,5 @@
 import { NoteAPIClient } from "../client";
+import { User } from "../types/user/User";
 
 export async function searchUserByUsername(
   this: NoteAPIClient,
@@ -7,6 +8,6 @@ export async function searchUserByUsername(
   }: {
     username: string;
   }
-): Promise<any> {
-  return this.get<any>(`${this.BASE_URL}/v2/creators/${username}`);
+) {
+  return this.get<User>(`${this.BASE_URL}/v2/creators/${username}`);
 }

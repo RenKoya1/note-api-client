@@ -1,4 +1,5 @@
 import { NoteAPIClient } from "../client";
+import { Notes } from "../types/note/Notes";
 
 export async function searchNotesByUsername(
   this: NoteAPIClient,
@@ -9,7 +10,7 @@ export async function searchNotesByUsername(
     username: string;
     page?: number;
   }
-): Promise<any> {
+) {
   const url = `${this.BASE_URL}/v2/creators/${encodeURIComponent(
     username
   )}/contents`;
@@ -18,5 +19,5 @@ export async function searchNotesByUsername(
     page,
   };
 
-  return this.get<any>(url, params);
+  return this.get<Notes>(url, params);
 }

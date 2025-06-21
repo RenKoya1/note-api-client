@@ -4,6 +4,6 @@ client
   .searchUserByUsername({
     username: "notepecora",
   })
-  .then((data: any) => {
+  .then((data) => {
     console.log(data);
   });

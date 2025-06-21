@@ -1,4 +1,6 @@
 import { NoteAPIClient } from "../client";
+import { Cursor } from "../types/Cursor";
+import { Notes } from "../types/note/Notes";
 
 export async function searchNotesByKeyword(
   this: NoteAPIClient,
@@ -11,7 +13,7 @@ export async function searchNotesByKeyword(
     size?: number;
     start?: number;
   }
-): Promise<any> {
+) {
   const params = {
     q: keyword,
     size,
@@ -19,5 +21,8 @@ export async function searchNotesByKeyword(
     context: "note",
   };
 
-  return this.get<any>(`${this.BASE_URL}/v3/searches`, params);
+  return this.get<{
+    notes: Notes;
+    cursor: Cursor;
+  }>(`${this.BASE_URL}/v3/searches`, params);
 }

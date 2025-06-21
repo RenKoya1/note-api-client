@@ -6,4 +6,6 @@ client
   })
   .then((data: any) => {
     console.log(data);
+    console.log("======");
+    console.log(data.notes.contents[0].price_info);
   });

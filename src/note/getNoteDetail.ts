@@ -1,4 +1,5 @@
 import { NoteAPIClient } from "../client";
+import { NoteDetail } from "../types/note/NoteDetail";
 
 export async function getNoteDetail(
   this: NoteAPIClient,
@@ -7,6 +8,6 @@ export async function getNoteDetail(
   }: {
     key: string;
   }
-): Promise<any> {
-  return this.get<any>(`${this.BASE_URL}/v3/notes/${key}`, {});
+) {
+  return this.get<NoteDetail>(`${this.BASE_URL}/v3/notes/${key}`, {});
 }

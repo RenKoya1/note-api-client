@@ -1,4 +1,7 @@
 import { NoteAPIClient } from "../client";
+import { Cursor } from "../types/Cursor";
+import { User } from "../types/user/User";
+import { UserSimple } from "../types/user/UserSimple";
 
 export async function searchUsersByKeyword(
   this: NoteAPIClient,
@@ -19,5 +22,14 @@ export async function searchUsersByKeyword(
     context: "user",
   };
 
-  return this.get<any>(`${this.BASE_URL}/v3/searches`, params);
+  return this.get<{
+    cursor: Cursor;
+    users: {
+      is_last_page: boolean;
+      content: UserSimple[];
+      top_search_contents: any[];
+      total_count: number;
+      rounded_total_count: number;
+    };
+  }>(`${this.BASE_URL}/v3/searches`, params);
 }
