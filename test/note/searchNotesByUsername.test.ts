@@ -5,5 +5,5 @@ client
     username: "ego_station",
   })
   .then((data: any) => {
-    console.log(data.contents);
+    console.log(data);
   });
