@@ -1,7 +1,7 @@
 import { NoteAPIClient } from "../client";
 interface SignInRequest {
   g_recaptcha_response: string;
-  email: string;
+  login: string;
   password: string;
   redirect_path?: string;
 }
@@ -9,7 +9,7 @@ export async function signIn(
   this: NoteAPIClient,
   {
     g_recaptcha_response,
-    email,
+    login,
     password,
     redirect_path = "https://note.com/",
   }: SignInRequest
@@ -17,7 +17,7 @@ export async function signIn(
   const endpoint = `${this.BASE_URL}/v1/sessions/sign_in`;
   return this.post<any>(endpoint, {
     g_recaptcha_response,
-    login: email,
+    login: login,
     password,
     redirect_path,
   });

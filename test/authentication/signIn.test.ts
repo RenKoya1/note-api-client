@@ -2,18 +2,14 @@ import { client } from "..";
 
 client
   .signIn({
-    email: process.env.NOTE_EMAIL || "",
+    login: process.env.NOTE_EMAIL || "",
     password: process.env.NOTE_PASSWORD || "",
     g_recaptcha_response: "",
     redirect_path: "/",
   })
   .then((data: any) => {
-    client
-      .createNote({
-        title: "Test Note",
-        body: "This is a test note created via the NoteAPIClient.",
-      })
-      .then((data: any) => {
-        console.log(data);
-      });
+    console.log("Signed in successfully:", data);
+  })
+  .catch((error: any) => {
+    console.error("Error signing in:", error);
   });
