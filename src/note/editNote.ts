@@ -3,18 +3,18 @@ import { NoteAPIClient } from "../client";
 export async function editNote(
   this: NoteAPIClient,
   {
-    articleId,
+    id,
     title,
     body,
     eyecatchImageKey,
   }: {
-    articleId: string;
+    id: string;
     title: string;
     body: string;
     eyecatchImageKey?: string;
   }
 ): Promise<any> {
-  const url = `${this.BASE_URL}/v1/text_notes/${articleId}`;
+  const url = `${this.BASE_URL}/v1/text_notes/${id}`;
 
   const data = {
     status: "published",

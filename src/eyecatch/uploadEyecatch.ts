@@ -40,10 +40,10 @@ function getContentTypeFromBuffer(buffer: ArrayBuffer): string {
 export async function uploadEyecatch(
   this: NoteAPIClient,
   {
-    articleId,
+    id,
     imageUrl,
   }: {
-    articleId: string;
+    id: string;
     imageUrl: string;
   }
 ) {
@@ -51,7 +51,7 @@ export async function uploadEyecatch(
   const croppedBuffer = await fetch(imageUrl).then((res) => res.arrayBuffer());
   const contentType = getContentTypeFromBuffer(croppedBuffer);
   const form = new FormData();
-  form.append("note_id", articleId);
+  form.append("note_id", id);
   form.append("file", new Blob([croppedBuffer], { type: contentType }), "blob");
   const { width, height } = imageSize(Buffer.from(croppedBuffer));
   form.append("width", String(width));
