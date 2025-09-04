@@ -19,15 +19,17 @@ import { getContests } from "../contest/getContests";
 import { getRecommendMetadata } from "../recommend/getRecommendMetadata";
 import { getMkitLayouts } from "../mkit/getMkitLayouts";
 import { searchUserByUsername } from "../user/searchUserByUsername";
-
+import { signIn } from "../authentication/signIn";
+import { createNote } from "../note/createNote";
+import { editNote } from "../note/editNote";
 export class NoteAPIClient {
   private client: AxiosInstance;
 
   public BASE_URL = "https://note.com/api";
-  public accessToken: string | null = null;
-  constructor(accessToken?: string) {
-    if (accessToken) {
-      this.accessToken = accessToken;
+  public cookies: string | null = null;
+  constructor(cookies?: string) {
+    if (cookies) {
+      this.cookies = cookies;
     }
     this.client = axios.create({
       timeout: 14000,
@@ -37,7 +39,13 @@ export class NoteAPIClient {
   public async get<T>(url: string, params?: Record<string, any>): Promise<T> {
     const allParams = { ...params };
     try {
-      const response = await this.client.get<T>(url, { params: allParams });
+      const response = await this.client.get<T>(url, {
+        params: allParams,
+        headers: {
+          Cookie: this.cookies,
+          "Content-Type": "application/json",
+        },
+      });
 
       return (response.data as any).data as T;
     } catch (error) {
@@ -52,10 +60,12 @@ export class NoteAPIClient {
     try {
       const response = await this.client.post<T>(url, data, {
         headers: {
+          Cookie: this.cookies,
           "Content-Type": "application/json",
-          Authorization: `Bearer ${this.accessToken}`,
         },
       });
+      const cookies = response.headers["set-cookie"] || [];
+      this.cookies = cookies.join("; ");
       return (response.data as any).data as T;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -66,6 +76,25 @@ export class NoteAPIClient {
     }
   }
 
+  public async put<T>(url: string, data?: Record<string, any>): Promise<T> {
+    try {
+      const response = await this.client.put<T>(url, data, {
+        headers: {
+          Cookie: this.cookies,
+          "Content-Type": "application/json",
+        },
+      });
+      const cookies = response.headers["set-cookie"] || [];
+      this.cookies = cookies.join("; ");
+      return (response.data as any).data as T;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(`API request failed: ${error.message}`);
+      } else {
+        throw new Error(`Unexpected error: ${error}`);
+      }
+    }
+  }
   public searchNotesByKeyword = searchNotesByKeyword;
   public getNoteDetail = getNoteDetail;
 
@@ -87,4 +116,7 @@ export class NoteAPIClient {
   public getRecommendMetadata = getRecommendMetadata;
   public getMkitLayouts = getMkitLayouts;
   public searchUserByUsername = searchUserByUsername;
+  public signIn = signIn;
+  public createNote = createNote;
+  public editNote = editNote;
 }
