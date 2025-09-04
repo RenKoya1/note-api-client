@@ -17,5 +17,21 @@ export async function createNote(
     template_key: null,
   };
 
-  return this.post<any>(url, data);
+  return this.post<{
+    id: number;
+    key: string;
+    type: string;
+    name: string;
+    body: string | null;
+    description: string | null;
+    user_id: number;
+    status: string;
+    price: number;
+    publish_at: string | null;
+    created_at: string;
+    slug: string;
+    can_publish: boolean;
+    can_update: boolean;
+    can_read: boolean;
+  }>(url, data);
 }

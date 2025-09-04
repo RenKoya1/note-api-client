@@ -17,7 +17,7 @@ export async function signIn(
   const endpoint = `${this.BASE_URL}/v1/sessions/sign_in`;
   return this.post<any>(endpoint, {
     g_recaptcha_response,
-    login: login,
+    login,
     password,
     redirect_path,
   });
