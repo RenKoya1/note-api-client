@@ -22,6 +22,7 @@ import { searchUserByUsername } from "../user/searchUserByUsername";
 import { signIn } from "../authentication/signIn";
 import { createNote } from "../note/createNote";
 import { editNote } from "../note/editNote";
+import { uploadEyecatch } from "../eyecatch/uploadEyecatch";
 export class NoteAPIClient {
   private client: AxiosInstance;
 
@@ -119,4 +120,5 @@ export class NoteAPIClient {
   public signIn = signIn;
   public createNote = createNote;
   public editNote = editNote;
+  public uploadEyecatch = uploadEyecatch;
 }
