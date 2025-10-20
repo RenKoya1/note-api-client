@@ -27,6 +27,7 @@ export class NoteAPIClient {
 
   public BASE_URL = "https://note.com/api";
   public cookies: string | null = null;
+  public csrfToken: string | null = null;
   constructor(cookies?: string) {
     if (cookies) {
       this.cookies = cookies;
@@ -58,14 +59,45 @@ export class NoteAPIClient {
   }
   public async post<T>(url: string, data?: Record<string, any>): Promise<T> {
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/plain, */*",
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        Origin: "https://note.com",
+        Referer: "https://note.com/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+      };
+
+      if (this.cookies) {
+        headers.Cookie = this.cookies;
+      }
+
+      if (this.csrfToken) {
+        headers["x-note-csrf-token"] = this.csrfToken;
+        headers["X-CSRF-Token"] = this.csrfToken;
+        headers["X-XSRF-TOKEN"] = this.csrfToken;
+      }
+
       const response = await this.client.post<T>(url, data, {
-        headers: {
-          Cookie: this.cookies,
-          "Content-Type": "application/json",
-        },
+        headers,
       });
-      const cookies = response.headers["set-cookie"] || [];
-      this.cookies = cookies.join("; ");
+
+      // Set-Cookieヘッダーからcookie名=値のペアのみを抽出
+      const setCookies = response.headers["set-cookie"] || [];
+      if (setCookies.length > 0) {
+        this.cookies = setCookies
+          .map((cookie) => cookie.split(";")[0]) // 最初のname=valueのみ取得
+          .join("; ");
+      }
+
+      // CSRFトークンをレスポンスから取得
+      if ((response.data as any).data?.csrf_token) {
+        this.csrfToken = (response.data as any).data.csrf_token;
+      }
+
       return (response.data as any).data as T;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -78,14 +110,40 @@ export class NoteAPIClient {
 
   public async put<T>(url: string, data?: Record<string, any>): Promise<T> {
     try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/plain, */*",
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        Origin: "https://note.com",
+        Referer: "https://note.com/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+      };
+
+      if (this.cookies) {
+        headers.Cookie = this.cookies;
+      }
+
+      if (this.csrfToken) {
+        headers["x-note-csrf-token"] = this.csrfToken;
+        headers["X-CSRF-Token"] = this.csrfToken;
+        headers["X-XSRF-TOKEN"] = this.csrfToken;
+      }
+
       const response = await this.client.put<T>(url, data, {
-        headers: {
-          Cookie: this.cookies,
-          "Content-Type": "application/json",
-        },
+        headers,
       });
-      const cookies = response.headers["set-cookie"] || [];
-      this.cookies = cookies.join("; ");
+
+      // Set-Cookieヘッダーからcookie名=値のペアのみを抽出
+      const setCookies = response.headers["set-cookie"] || [];
+      if (setCookies.length > 0) {
+        this.cookies = setCookies
+          .map((cookie) => cookie.split(";")[0]) // 最初のname=valueのみ取得
+          .join("; ");
+      }
+
       return (response.data as any).data as T;
     } catch (error) {
       if (axios.isAxiosError(error)) {

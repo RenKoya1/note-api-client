@@ -7,8 +7,17 @@ client
     g_recaptcha_response: "",
     redirect_path: "/",
   })
-  .then((data: any) => {
-    console.log("Signed in successfully:", data);
+  .then(async (data: any) => {
+    try {
+      console.log(client.cookies);
+      // await client.createNote({
+      //   title: "Test Note",
+      //   body: "This is a test note created during sign-in test.",
+      // });
+      console.log("Note created successfully");
+    } catch (error) {
+      console.error("Error creating note:", error);
+    }
   })
   .catch((error: any) => {
     console.error("Error signing in:", error);
