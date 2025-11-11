@@ -22,6 +22,7 @@ import { signIn } from "../authentication/signIn";
 import { createNote } from "../note/createNote";
 import { editNote } from "../note/editNote";
 import { uploadEyecatch } from "../eyecatch/uploadEyecatch";
+import { draftDelete } from "../note/draftDelete";
 export class NoteAPIClient {
   private client: AxiosInstance;
 
@@ -153,6 +154,53 @@ export class NoteAPIClient {
       }
     }
   }
+
+  public async delete<T>(url: string, data?: Record<string, any>): Promise<T> {
+    try {
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/plain, */*",
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        Origin: "https://note.com",
+        Referer: "https://note.com/",
+        "Sec-Fetch-Dest": "empty",
+        "Sec-Fetch-Mode": "cors",
+        "Sec-Fetch-Site": "same-origin",
+      };
+
+      if (this.cookies) {
+        headers.Cookie = this.cookies;
+      }
+
+      if (this.csrfToken) {
+        headers["x-note-csrf-token"] = this.csrfToken;
+        headers["X-CSRF-Token"] = this.csrfToken;
+        headers["X-XSRF-TOKEN"] = this.csrfToken;
+      }
+
+      const response = await this.client.delete<T>(url, {
+        headers,
+        data: data,
+      });
+
+      // Set-Cookieヘッダーからcookie名=値のペアのみを抽出
+      const setCookies = response.headers["set-cookie"] || [];
+      if (setCookies.length > 0) {
+        this.cookies = setCookies
+          .map((cookie) => cookie.split(";")[0]) // 最初のname=valueのみ取得
+          .join("; ");
+      }
+
+      return (response.data as any).data as T;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new Error(`API request failed: ${error.message}`);
+      } else {
+        throw new Error(`Unexpected error: ${error}`);
+      }
+    }
+  }
   public searchNotesByKeyword = searchNotesByKeyword;
   public getNoteDetail = getNoteDetail;
 
@@ -177,4 +225,5 @@ export class NoteAPIClient {
   public createNote = createNote;
   public editNote = editNote;
   public uploadEyecatch = uploadEyecatch;
+  public draftDelete = draftDelete;
 }
