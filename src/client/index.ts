@@ -23,6 +23,7 @@ import { createNote } from "../note/createNote";
 import { editNote } from "../note/editNote";
 import { uploadEyecatch } from "../eyecatch/uploadEyecatch";
 import { draftDelete } from "../note/draftDelete";
+import { deleteNote } from "../note/deleteNote";
 export class NoteAPIClient {
   private client: AxiosInstance;
 
@@ -225,5 +226,6 @@ export class NoteAPIClient {
   public createNote = createNote;
   public editNote = editNote;
   public uploadEyecatch = uploadEyecatch;
+  public deleteNote = deleteNote;
   public draftDelete = draftDelete;
 }
