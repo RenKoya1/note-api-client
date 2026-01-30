@@ -1,4 +1,5 @@
 import { NoteAPIClient } from "../client";
+import { HashtagSearchResponse } from "../types/note/HashtagSearchNote";
 
 export async function searchNotesByHashtag(
   this: NoteAPIClient,
@@ -13,7 +14,7 @@ export async function searchNotesByHashtag(
     order?: "new" | "popular" | "hot";
     paid_only?: boolean;
   }
-): Promise<any> {
+): Promise<HashtagSearchResponse> {
   const url = `${this.BASE_URL}/v3/hashtags/${hashtag}/notes`;
   const params = {
     paid_only: paid_only,
@@ -21,5 +22,6 @@ export async function searchNotesByHashtag(
     page: page,
   };
 
-  return this.get<any>(url, params);
+  return this.get<HashtagSearchResponse>(url, params);
 }
+

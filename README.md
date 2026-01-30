@@ -343,7 +343,3 @@ If you find this library useful, please consider giving it a ⭐ on GitHub!
 ## 📧 Contact
 
 For questions, suggestions, or feedback, please open an issue on GitHub.
-
----
-
-**Keywords**: note.com, note-api, note api client, nodejs note, typescript note, note.com api, note automation, content management, japanese blogging platform, note sdk, note library

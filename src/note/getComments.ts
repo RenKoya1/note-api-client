@@ -1,4 +1,5 @@
 import { NoteAPIClient } from "../client";
+import { CommentsResponse } from "../types/note/Comment";
 
 export async function getComments(
   this: NoteAPIClient,
@@ -7,6 +8,7 @@ export async function getComments(
   }: {
     id: string;
   }
-): Promise<any> {
-  return this.get<any>(`${this.BASE_URL}/v1/note/${id}/comments`, {});
+): Promise<CommentsResponse> {
+  return this.get<CommentsResponse>(`${this.BASE_URL}/v1/note/${id}/comments`, {});
 }
+

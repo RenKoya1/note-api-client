@@ -1,4 +1,5 @@
 import { NoteAPIClient } from "../client";
+import { CategorySearchResponse } from "../types/note/CategoryNote";
 
 export async function searchNotesByCategory(
   this: NoteAPIClient,
@@ -13,7 +14,7 @@ export async function searchNotesByCategory(
     order?: "new" | "popular" | "hot";
     paid_only?: boolean;
   }
-): Promise<any> {
+): Promise<CategorySearchResponse> {
   const url = `${this.BASE_URL}/v1/categories/${category}`;
   const params = {
     note_intro_only: paid_only,
@@ -21,5 +22,6 @@ export async function searchNotesByCategory(
     page: page,
   };
 
-  return this.get<any>(url, params);
+  return this.get<CategorySearchResponse>(url, params);
 }
+
