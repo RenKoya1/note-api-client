@@ -8,7 +8,7 @@ export async function createNote(
   }: {
     title: string;
     body: string;
-  }
+  },
 ) {
   const url = `${this.BASE_URL}/v1/text_notes`;
   const data = {

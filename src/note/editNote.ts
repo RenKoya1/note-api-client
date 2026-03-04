@@ -7,12 +7,14 @@ export async function editNote(
     title,
     body,
     eyecatchImageKey,
+    index = false,
   }: {
     id: string;
     title: string;
     body: string;
     eyecatchImageKey?: string;
-  }
+    index?: boolean;
+  },
 ): Promise<any> {
   const url = `${this.BASE_URL}/v1/text_notes/${id}`;
 
@@ -21,6 +23,7 @@ export async function editNote(
     name: title,
     free_body: body,
     eyecatch_image_key: eyecatchImageKey || null,
+    index,
   };
 
   return this.put<any>(url, data);

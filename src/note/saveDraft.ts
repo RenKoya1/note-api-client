@@ -7,12 +7,14 @@ export async function saveDraft(
     title,
     body,
     isTempSaved = true,
+    index = false,
   }: {
     id?: string;
     title: string;
     body: string;
     isTempSaved?: boolean;
-  }
+    index?: boolean;
+  },
 ): Promise<any> {
   const url = `${this.BASE_URL}/v1/text_notes/draft_save?id=${id}&is_temp_saved=${isTempSaved}`;
 
@@ -20,7 +22,7 @@ export async function saveDraft(
     name: title,
     body,
     body_length: body.replace(/<[^>]*>/g, "").length,
-    index: false,
+    index,
     is_lead_form: false,
   };
 

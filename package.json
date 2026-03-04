@@ -1,6 +1,6 @@
 {
   "name": "note-api-client",
-  "version": "0.0.31",
+  "version": "0.0.32",
   "description": "A comprehensive Node.js and TypeScript client library for note.com API - Search notes, manage content, handle authentication, and automate your note.com workflow with full TypeScript support",
   "license": "Apache-2.0",
   "main": "dist/index.js",

@@ -116,17 +116,19 @@ const hashtagNotes = await client.searchNotesByHashtag({
 ```ts
 const newNote = await client.createNote({
   title: "My First Note",
-  body: "This is the content of my note.",
+  body: "<p>This is the content of my note.</p>",
 });
 ```
 
-#### Edit Note
+#### Edit Note (Publish)
 
 ```ts
-const updatedNote = await client.editNote({
-  noteId: "123456",
+const published = await client.editNote({
+  id: "123456",
   title: "Updated Title",
-  body: "Updated content",
+  body: "<p>Updated content</p>",
+  eyecatchImageKey: "optional_image_key", // optional
+  index: true, // optional: enable table of contents
 });
 ```
 
@@ -134,8 +136,127 @@ const updatedNote = await client.editNote({
 
 ```ts
 const draft = await client.saveDraft({
+  id: "123456",
   title: "Draft Title",
-  body: "Draft content",
+  body: "<p>Draft content</p>",
+  isTempSaved: false, // optional (default: true)
+  index: true, // optional: enable table of contents
+});
+```
+
+#### Delete Note
+
+```ts
+await client.deleteNote({ id: "123456" });
+```
+
+#### Delete Draft
+
+```ts
+await client.draftDelete({ id: "123456" });
+```
+
+### Publishing Flow (Full Example)
+
+The recommended flow to create and publish a note:
+
+```ts
+// 1. Sign in
+await client.signIn({
+  login: "your_email@example.com",
+  password: "your_password",
+  g_recaptcha_response: "",
+  redirect_path: "/",
+});
+
+// 2. Create a draft
+const created = await client.createNote({
+  title: "My Article",
+  body: "",
+});
+
+// 3. Save draft with content
+await client.saveDraft({
+  id: created.id.toString(),
+  title: "My Article",
+  body: "<p>Article content here</p>",
+  isTempSaved: false,
+  index: false,
+});
+
+// 4. Publish
+await client.editNote({
+  id: created.id.toString(),
+  title: "My Article",
+  body: "<p>Article content here</p>",
+});
+```
+
+### Table of Contents (目次)
+
+To add a table of contents that auto-generates links from headings, use the `<table-of-contents>` tag and set `index: true` in both `saveDraft` and `editNote`.
+
+#### Supported HTML Tags
+
+| Tag                               | Description             | Appears in TOC? |
+| --------------------------------- | ----------------------- | --------------- |
+| `<table-of-contents>`             | Table of contents block | —               |
+| `<h2>`                            | Large heading           | **Yes**         |
+| `<h3>`                            | Small heading           | No              |
+| `<p>`                             | Paragraph               | No              |
+| `<ul>`, `<ol>`, `<li>`            | Lists                   | No              |
+| `<blockquote>`                    | Quote                   | No              |
+| `<pre><code>`                     | Code block              | No              |
+| `<figure>`, `<img>`               | Image                   | No              |
+| `<hr>`                            | Horizontal rule         | No              |
+| `<strong>`, `<em>`, `<a>`, `<br>` | Inline formatting       | No              |
+
+> **Note:** `<table>` HTML tags are **not supported** and will be stripped by note.com.
+
+#### Building the Body HTML
+
+Every element should have a unique `name` and `id` attribute (UUID v4):
+
+```ts
+import crypto from "crypto";
+const uuid = () => crypto.randomUUID();
+
+const body = [
+  // Table of contents (place before headings)
+  `<table-of-contents name="${uuid()}" id="${uuid()}"><br></table-of-contents>`,
+  // Headings & content
+  `<h2 name="${uuid()}" id="${uuid()}">Introduction</h2>`,
+  `<p name="${uuid()}" id="${uuid()}">First paragraph.</p>`,
+  `<h2 name="${uuid()}" id="${uuid()}">Main Topic</h2>`,
+  `<p name="${uuid()}" id="${uuid()}">Second paragraph.</p>`,
+  `<h3 name="${uuid()}" id="${uuid()}">Sub Topic</h3>`,
+  `<p name="${uuid()}" id="${uuid()}">Details here.</p>`,
+  `<h2 name="${uuid()}" id="${uuid()}">Conclusion</h2>`,
+  `<p name="${uuid()}" id="${uuid()}">Summary.</p>`,
+].join("");
+```
+
+#### Full Example with TOC
+
+```ts
+// 1. Create draft
+const created = await client.createNote({ title: "My Article", body: "" });
+
+// 2. Save draft with index: true
+await client.saveDraft({
+  id: created.id.toString(),
+  title: "My Article",
+  body: body, // HTML with <table-of-contents> and <h2> tags
+  isTempSaved: false,
+  index: true, // Required for TOC
+});
+
+// 3. Publish with index: true
+await client.editNote({
+  id: created.id.toString(),
+  title: "My Article",
+  body: body,
+  index: true, // Required for TOC
 });
 ```
 
