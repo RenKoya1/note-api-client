@@ -1,6 +1,6 @@
 {
   "name": "note-api-client",
-  "version": "0.0.29",
+  "version": "0.0.31",
   "description": "A comprehensive Node.js and TypeScript client library for note.com API - Search notes, manage content, handle authentication, and automate your note.com workflow with full TypeScript support",
   "license": "Apache-2.0",
   "main": "dist/index.js",
@@ -14,7 +14,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "release": "npm run build && npm publish --access=public"
   },
   "engines": {
     "node": ">=20"
