@@ -25,6 +25,33 @@ import { editNote } from "../note/editNote";
 import { uploadEyecatch } from "../eyecatch/uploadEyecatch";
 import { draftDelete } from "../note/draftDelete";
 import { deleteNote } from "../note/deleteNote";
+
+// An unusable proxy URL (e.g. an undecrypted "encrypted:..." secret leaking
+// through from env tooling) would make every request fail with an empty
+// connection error, so fall back to a direct connection instead.
+function sanitizeProxyUrl(proxyUrl?: string): string | undefined {
+  if (!proxyUrl) return undefined;
+  let parsed: URL;
+  try {
+    parsed = new URL(proxyUrl);
+  } catch {
+    console.warn(
+      "[note-api-client] proxyUrl is not a valid URL; connecting without proxy",
+    );
+    return undefined;
+  }
+  if (
+    (parsed.protocol !== "http:" && parsed.protocol !== "https:") ||
+    !parsed.hostname
+  ) {
+    console.warn(
+      `[note-api-client] proxyUrl has unsupported protocol "${parsed.protocol}" or no host; connecting without proxy`,
+    );
+    return undefined;
+  }
+  return proxyUrl;
+}
+
 export class NoteAPIClient {
   private client: AxiosInstance;
 
@@ -38,10 +65,14 @@ export class NoteAPIClient {
     // note.com issues a write-capable session only for residential JP IPs.
     // When a proxy URL is supplied, route every request through it so
     // sign-in and writes share the same egress IP.
+    const validProxyUrl = sanitizeProxyUrl(proxyUrl);
     this.client = axios.create({
       timeout: 14000,
-      ...(proxyUrl
-        ? { httpsAgent: new HttpsProxyAgent(proxyUrl), proxy: false as const }
+      ...(validProxyUrl
+        ? {
+            httpsAgent: new HttpsProxyAgent(validProxyUrl),
+            proxy: false as const,
+          }
         : {}),
     });
   }
