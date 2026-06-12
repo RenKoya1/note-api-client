@@ -3,7 +3,7 @@ import { Cursor, Notes } from "../../src";
 
 client
   .searchNotesByKeyword({
-    keyword: "AI",
+    keyword: "AI ビジネス",
   })
   .then((data: { notes: Notes; cursor: Cursor }) => {
     console.log("Keyword Search Response:");
@@ -12,7 +12,7 @@ client
     console.log("Notes Count:", data.notes.contents.length);
     console.log("\nCursor:", data.cursor);
     console.log("\nNotes:");
-    data.notes.contents.slice(0, 3).forEach((note, index) => {
+    data.notes.top_search_contents.slice(0, 3).forEach((note, index) => {
       console.log(`\nNote ${index + 1}:`);
       console.log("  Title:", note.name);
       console.log("  Author:", note.user?.nickname);

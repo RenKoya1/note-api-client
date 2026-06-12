@@ -12,7 +12,7 @@ export async function signIn(
     login,
     password,
     redirect_path = "https://note.com/",
-  }: SignInRequest
+  }: SignInRequest,
 ): Promise<any> {
   const endpoint = `${this.BASE_URL}/v1/sessions/sign_in`;
   return this.post<any>(endpoint, {

@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance } from "axios";
+import { HttpsProxyAgent } from "https-proxy-agent";
 import { searchNotesByKeyword } from "../note/searchNotesByKeyword";
 import { getNoteDetail } from "../note/getNoteDetail";
 import { searchNotesByUsername } from "../note/searchNotesByUsername";
@@ -30,12 +31,18 @@ export class NoteAPIClient {
   public BASE_URL = "https://note.com/api";
   public cookies: string | null = null;
   public csrfToken: string | null = null;
-  constructor(cookies?: string) {
+  constructor(cookies?: string, proxyUrl?: string) {
     if (cookies) {
       this.cookies = cookies;
     }
+    // note.com issues a write-capable session only for residential JP IPs.
+    // When a proxy URL is supplied, route every request through it so
+    // sign-in and writes share the same egress IP.
     this.client = axios.create({
       timeout: 14000,
+      ...(proxyUrl
+        ? { httpsAgent: new HttpsProxyAgent(proxyUrl), proxy: false as const }
+        : {}),
     });
   }
 
@@ -102,12 +109,23 @@ export class NoteAPIClient {
         this.csrfToken = (response.data as any).data.csrf_token;
       }
 
+      // note.com returns 2xx with an `error` body for auth/validation failures
+      // (e.g. {"error":{"code":"auth","message":"not_login"}}). Surface it.
+      const errBody = (response.data as any)?.error;
+      if (errBody) {
+        throw new Error(
+          `note API error: ${errBody.code ?? "unknown"} - ${errBody.message ?? JSON.stringify(errBody)}`,
+        );
+      }
+
       return (response.data as any).data as T;
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw new Error(`API request failed: ${error.message}`);
+        const body = error.response?.data;
+        const detail = body ? ` body=${JSON.stringify(body).slice(0, 300)}` : "";
+        throw new Error(`API request failed: ${error.message}${detail}`);
       } else {
-        throw new Error(`Unexpected error: ${error}`);
+        throw error;
       }
     }
   }
