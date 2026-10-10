@@ -122,6 +122,8 @@ export interface NoteDetail {
   exclude_ai_learning_reward: boolean;
   is_related_with_investment: boolean;
   related_stocks: unknown[];
+  translation?: unknown;
+  translation_setting?: unknown;
 }
 
 export interface NoteCapabilities {
@@ -162,6 +164,7 @@ export interface NoteDetailUser {
   twitter_nickname: string | null;
   socials: {
     twitter?: {
+      id?: number;
       nickname?: string;
       name?: string;
       uid?: string;

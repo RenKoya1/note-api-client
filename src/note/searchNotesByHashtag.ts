@@ -1,6 +1,15 @@
-import { NoteAPIClient } from "../client";
-import { HashtagSearchResponse } from "../types/note/HashtagSearchNote";
+import type { NoteAPIClient } from "../client";
+import { normalizeHashtag, pageParam } from "../client/params";
+import type { HashtagSearchResponse } from "../types/note/HashtagSearchNote";
 
+/**
+ * Lists notes tagged with a hashtag. GET /v3/hashtags/{hashtag}/notes
+ *
+ * @param hashtag Hashtag with or without the leading "#".
+ * @param order "popular" (default), "new" or "hot".
+ * @param paid_only Only return paid notes.
+ * @param page 1-based page number (50 notes per page). Use `next_page` / `is_last_page`.
+ */
 export async function searchNotesByHashtag(
   this: NoteAPIClient,
   {
@@ -13,15 +22,10 @@ export async function searchNotesByHashtag(
     page?: number;
     order?: "new" | "popular" | "hot";
     paid_only?: boolean;
-  }
+  },
 ): Promise<HashtagSearchResponse> {
-  const url = `${this.BASE_URL}/v3/hashtags/${hashtag}/notes`;
-  const params = {
-    paid_only: paid_only,
-    order: order,
-    page: page,
-  };
-
-  return this.get<HashtagSearchResponse>(url, params);
+  return this.get<HashtagSearchResponse>(
+    `${this.BASE_URL}/v3/hashtags/${encodeURIComponent(normalizeHashtag(hashtag))}/notes`,
+    { order, paid_only, page: pageParam(page) },
+  );
 }
-

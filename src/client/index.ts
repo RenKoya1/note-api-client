@@ -1,5 +1,7 @@
-import axios, { type AxiosInstance } from "axios";
+import axios, { type AxiosInstance, type Method } from "axios";
 import { HttpsProxyAgent } from "https-proxy-agent";
+import { mergeCookies } from "./cookies";
+import { NoteAPIError, parseErrorBody } from "./errors";
 import { searchNotesByKeyword } from "../note/searchNotesByKeyword";
 import { getNoteDetail } from "../note/getNoteDetail";
 import { searchNotesByUsername } from "../note/searchNotesByUsername";
@@ -8,23 +10,52 @@ import { searchUsersByKeyword } from "../user/searchUsersByKeyword";
 import { getFollowings } from "../user/getFollowings";
 import { getFollowers } from "../user/getFollowers";
 import { getComments } from "../note/getComments";
+import { getNoteLikes } from "../note/getNoteLikes";
 import { searchMagazinesByKeyword } from "../magazine/searchMagazinesByKeyword";
+import { searchMagazinesByUsername } from "../magazine/searchMagazinesByUsername";
 import { getMagazineDetail } from "../magazine/getMagazineDetail";
+import { getMagazineNotes } from "../magazine/getMagazineNotes";
 import { getCategories } from "../category/getCategories";
 import { searchNotesByCategory } from "../note/searchNotesByCategory";
 import { getHashtags } from "../hashtag/getHastags";
+import { searchHashtagsByKeyword } from "../hashtag/searchHashtagsByKeyword";
 import { searchNotesByHashtag } from "../note/searchNotesByHashtag";
 import { getHashtagDetail } from "../hashtag/getHashtagDetail";
 import { getContests } from "../contest/getContests";
 import { getRecommendMetadata } from "../recommend/getRecommendMetadata";
 import { getMkitLayouts } from "../mkit/getMkitLayouts";
 import { searchUserByUsername } from "../user/searchUserByUsername";
+import { getCurrentUser } from "../user/getCurrentUser";
 import { signIn } from "../authentication/signIn";
 import { createNote } from "../note/createNote";
 import { editNote } from "../note/editNote";
 import { uploadEyecatch } from "../eyecatch/uploadEyecatch";
 import { draftDelete } from "../note/draftDelete";
 import { deleteNote } from "../note/deleteNote";
+
+export { NoteAPIError } from "./errors";
+
+const DEFAULT_USER_AGENT =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36";
+
+export interface NoteAPIClientOptions {
+  /**
+   * Cookie header value of a logged-in note.com session, e.g.
+   * `"_note_session_v5=xxxxxxxx"`. Required for write operations.
+   */
+  cookies?: string;
+  /**
+   * HTTP(S) proxy URL every request is routed through. Invalid values are
+   * ignored with a warning and requests go out directly.
+   */
+  proxyUrl?: string;
+  /** Request timeout in milliseconds. Defaults to 14000. */
+  timeout?: number;
+  /** User-Agent header sent with every request. */
+  userAgent?: string;
+}
+
+type Params = Record<string, unknown>;
 
 // An unusable proxy URL (e.g. an undecrypted "encrypted:..." secret leaking
 // through from env tooling) would make every request fail with an empty
@@ -52,22 +83,43 @@ function sanitizeProxyUrl(proxyUrl?: string): string | undefined {
   return proxyUrl;
 }
 
+// Drop undefined values so they are not serialized as "undefined".
+function compactParams(params?: Params): Params | undefined {
+  if (!params) return undefined;
+  const result: Params = {};
+  for (const [key, value] of Object.entries(params)) {
+    if (value !== undefined && value !== null) result[key] = value;
+  }
+  return result;
+}
+
 export class NoteAPIClient {
   private client: AxiosInstance;
+  private userAgent: string;
 
   public BASE_URL = "https://note.com/api";
   public cookies: string | null = null;
   public csrfToken: string | null = null;
-  constructor(cookies?: string, proxyUrl?: string) {
-    if (cookies) {
-      this.cookies = cookies;
+
+  /**
+   * @param cookiesOrOptions Cookie header of a logged-in session, or an options object.
+   * @param proxyUrl Proxy URL (positional form, kept for backward compatibility).
+   */
+  constructor(cookiesOrOptions?: string | NoteAPIClientOptions, proxyUrl?: string) {
+    const options: NoteAPIClientOptions =
+      typeof cookiesOrOptions === "object" && cookiesOrOptions !== null
+        ? cookiesOrOptions
+        : { cookies: cookiesOrOptions, proxyUrl };
+    if (options.cookies) {
+      this.cookies = options.cookies;
     }
+    this.userAgent = options.userAgent ?? DEFAULT_USER_AGENT;
     // note.com issues a write-capable session only for residential JP IPs.
     // When a proxy URL is supplied, route every request through it so
     // sign-in and writes share the same egress IP.
-    const validProxyUrl = sanitizeProxyUrl(proxyUrl);
+    const validProxyUrl = sanitizeProxyUrl(options.proxyUrl);
     this.client = axios.create({
-      timeout: 14000,
+      timeout: options.timeout ?? 14000,
       ...(validProxyUrl
         ? {
             httpsAgent: new HttpsProxyAgent(validProxyUrl),
@@ -77,206 +129,160 @@ export class NoteAPIClient {
     });
   }
 
-  public async get<T>(url: string, params?: Record<string, any>): Promise<T> {
-    const allParams = { ...params };
-    try {
-      const response = await this.client.get<T>(url, {
-        params: allParams,
-        headers: {
-          Cookie: this.cookies,
-          "Content-Type": "application/json",
-          "User-Agent":
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        },
-      });
-
-      return (response.data as any).data as T;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(`API request failed: ${error.message}`);
-      } else {
-        throw new Error(`Unexpected error: ${error}`);
-      }
-    }
-  }
-  public async post<T>(url: string, data?: Record<string, any>): Promise<T> {
-    try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        Accept: "application/json, text/plain, */*",
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        Origin: "https://note.com",
-        Referer: "https://note.com/",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-      };
-
-      if (this.cookies) {
-        headers.Cookie = this.cookies;
-      }
-
-      if (this.csrfToken) {
-        headers["x-note-csrf-token"] = this.csrfToken;
-        headers["X-CSRF-Token"] = this.csrfToken;
-        headers["X-XSRF-TOKEN"] = this.csrfToken;
-      }
-
-      const response = await this.client.post<T>(url, data, {
-        headers,
-      });
-
-      // Set-Cookieヘッダーからcookie名=値のペアのみを抽出
-      const setCookies = response.headers["set-cookie"] || [];
-      if (setCookies.length > 0) {
-        this.cookies = setCookies
-          .map((cookie) => cookie.split(";")[0]) // 最初のname=valueのみ取得
-          .join("; ");
-      }
-
-      // CSRFトークンをレスポンスから取得
-      if ((response.data as any).data?.csrf_token) {
-        this.csrfToken = (response.data as any).data.csrf_token;
-      }
-
-      // note.com returns 2xx with an `error` body for auth/validation failures
-      // (e.g. {"error":{"code":"auth","message":"not_login"}}). Surface it.
-      const errBody = (response.data as any)?.error;
-      if (errBody) {
-        throw new Error(
-          `note API error: ${errBody.code ?? "unknown"} - ${errBody.message ?? JSON.stringify(errBody)}`,
-        );
-      }
-
-      return (response.data as any).data as T;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        const body = error.response?.data;
-        const detail = body ? ` body=${JSON.stringify(body).slice(0, 300)}` : "";
-        throw new Error(`API request failed: ${error.message}${detail}`);
-      } else {
-        throw error;
-      }
-    }
+  /** Whether the client holds a session cookie (does not verify it; see getCurrentUser). */
+  public get isAuthenticated(): boolean {
+    return !!this.cookies && this.cookies.includes("_note_session_v5=");
   }
 
-  public async put<T>(url: string, data?: Record<string, any>): Promise<T> {
-    try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        Accept: "application/json, text/plain, */*",
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        Origin: "https://note.com",
-        Referer: "https://note.com/",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-      };
-
-      if (this.cookies) {
-        headers.Cookie = this.cookies;
-      }
-
-      if (this.csrfToken) {
-        headers["x-note-csrf-token"] = this.csrfToken;
-        headers["X-CSRF-Token"] = this.csrfToken;
-        headers["X-XSRF-TOKEN"] = this.csrfToken;
-      }
-
-      const response = await this.client.put<T>(url, data, {
-        headers,
-      });
-
-      // Set-Cookieヘッダーからcookie名=値のペアのみを抽出
-      const setCookies = response.headers["set-cookie"] || [];
-      if (setCookies.length > 0) {
-        this.cookies = setCookies
-          .map((cookie) => cookie.split(";")[0]) // 最初のname=valueのみ取得
-          .join("; ");
-      }
-
-      return (response.data as any).data as T;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(`API request failed: ${error.message}`);
-      } else {
-        throw new Error(`Unexpected error: ${error}`);
-      }
+  private buildHeaders(hasJsonBody: boolean): Record<string, string> {
+    const headers: Record<string, string> = {
+      Accept: "application/json, text/plain, */*",
+      "User-Agent": this.userAgent,
+      Origin: "https://note.com",
+      Referer: "https://note.com/",
+      "X-Requested-With": "XMLHttpRequest",
+    };
+    // FormData must not get a JSON content type: axios would serialize it to
+    // JSON and the upload endpoints answer "no_file_selected".
+    if (hasJsonBody) headers["Content-Type"] = "application/json";
+    if (this.cookies) headers.Cookie = this.cookies;
+    if (this.csrfToken) {
+      headers["x-note-csrf-token"] = this.csrfToken;
+      headers["X-CSRF-Token"] = this.csrfToken;
+      headers["X-XSRF-TOKEN"] = this.csrfToken;
     }
+    return headers;
   }
 
-  public async delete<T>(url: string, data?: Record<string, any>): Promise<T> {
-    try {
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-        Accept: "application/json, text/plain, */*",
-        "User-Agent":
-          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-        Origin: "https://note.com",
-        Referer: "https://note.com/",
-        "Sec-Fetch-Dest": "empty",
-        "Sec-Fetch-Mode": "cors",
-        "Sec-Fetch-Site": "same-origin",
-      };
-
-      if (this.cookies) {
-        headers.Cookie = this.cookies;
-      }
-
-      if (this.csrfToken) {
-        headers["x-note-csrf-token"] = this.csrfToken;
-        headers["X-CSRF-Token"] = this.csrfToken;
-        headers["X-XSRF-TOKEN"] = this.csrfToken;
-      }
-
-      const response = await this.client.delete<T>(url, {
-        headers,
-        data: data,
-      });
-
-      // Set-Cookieヘッダーからcookie名=値のペアのみを抽出
-      const setCookies = response.headers["set-cookie"] || [];
-      if (setCookies.length > 0) {
-        this.cookies = setCookies
-          .map((cookie) => cookie.split(";")[0]) // 最初のname=valueのみ取得
-          .join("; ");
-      }
-
-      return (response.data as any).data as T;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new Error(`API request failed: ${error.message}`);
-      } else {
-        throw new Error(`Unexpected error: ${error}`);
-      }
-    }
+  private storeCookies(setCookie: string[] | string | undefined) {
+    const list = Array.isArray(setCookie) ? setCookie : setCookie ? [setCookie] : [];
+    this.cookies = mergeCookies(this.cookies, list);
   }
+
+  /**
+   * Sends a request to note.com and returns the `data` field of the response.
+   * Throws NoteAPIError for HTTP errors and for 2xx responses carrying an
+   * `error` body.
+   */
+  public async request<T>(
+    method: Method,
+    url: string,
+    options: { params?: Params; data?: unknown } = {},
+  ): Promise<T> {
+    const { data } = options;
+    const params = compactParams(options.params);
+    const upperMethod = method.toUpperCase();
+    const hasJsonBody = data !== undefined && !(data instanceof FormData);
+
+    let response;
+    try {
+      response = await this.client.request({
+        method,
+        url,
+        params,
+        data,
+        headers: this.buildHeaders(hasJsonBody),
+      });
+    } catch (error) {
+      if (!axios.isAxiosError(error)) throw error;
+      const res = error.response;
+      if (res) this.storeCookies(res.headers["set-cookie"]);
+      const body = res?.data;
+      const parsed =
+        parseErrorBody(body) ??
+        (body && typeof body === "object" && typeof body.data === "string"
+          ? { code: undefined, message: body.data as string }
+          : undefined);
+      const status = res?.status;
+      throw new NoteAPIError({
+        message: `note API request failed: ${upperMethod} ${url}${status ? ` -> ${status}` : ""}: ${parsed?.message ?? error.message}`,
+        method: upperMethod,
+        url,
+        status,
+        code: parsed?.code ?? (status ? undefined : error.code),
+        body,
+        cause: error,
+      });
+    }
+
+    this.storeCookies(response.headers["set-cookie"]);
+    const body = response.data;
+    const parsed = parseErrorBody(body);
+    if (parsed) {
+      throw new NoteAPIError({
+        message: `note API error: ${parsed.code ?? "unknown"} - ${parsed.message}`,
+        method: upperMethod,
+        url,
+        status: response.status,
+        code: parsed.code,
+        body,
+      });
+    }
+    if (body === null || typeof body !== "object" || !("data" in body)) {
+      throw new NoteAPIError({
+        message: `note API returned an unexpected response: ${upperMethod} ${url} -> ${response.status}`,
+        method: upperMethod,
+        url,
+        status: response.status,
+        body,
+      });
+    }
+    const csrfToken = (body as any).data?.csrf_token;
+    if (typeof csrfToken === "string") this.csrfToken = csrfToken;
+    return (body as any).data as T;
+  }
+
+  public get<T>(url: string, params?: Params): Promise<T> {
+    return this.request<T>("GET", url, { params });
+  }
+
+  public post<T>(url: string, data?: unknown, params?: Params): Promise<T> {
+    return this.request<T>("POST", url, { data, params });
+  }
+
+  public put<T>(url: string, data?: unknown, params?: Params): Promise<T> {
+    return this.request<T>("PUT", url, { data, params });
+  }
+
+  public delete<T>(url: string, data?: unknown, params?: Params): Promise<T> {
+    return this.request<T>("DELETE", url, { data, params });
+  }
+
+  // Notes
   public searchNotesByKeyword = searchNotesByKeyword;
-  public getNoteDetail = getNoteDetail;
-
   public searchNotesByUsername = searchNotesByUsername;
+  public searchNotesByCategory = searchNotesByCategory;
+  public searchNotesByHashtag = searchNotesByHashtag;
+  public getNoteDetail = getNoteDetail;
+  public getComments = getComments;
+  public getNoteLikes = getNoteLikes;
+  public createNote = createNote;
   public saveDraft = saveDraft;
+  public editNote = editNote;
+  public deleteNote = deleteNote;
+  public draftDelete = draftDelete;
+  public uploadEyecatch = uploadEyecatch;
+
+  // Users
   public searchUsersByKeyword = searchUsersByKeyword;
+  public searchUserByUsername = searchUserByUsername;
   public getFollowings = getFollowings;
   public getFollowers = getFollowers;
-  public getComments = getComments;
+  public getCurrentUser = getCurrentUser;
+  public signIn = signIn;
+
+  // Magazines
   public searchMagazinesByKeyword = searchMagazinesByKeyword;
+  public searchMagazinesByUsername = searchMagazinesByUsername;
   public getMagazineDetail = getMagazineDetail;
+  public getMagazineNotes = getMagazineNotes;
+
+  // Hashtags / categories / misc
   public getCategories = getCategories;
-  public searchNotesByCategory = searchNotesByCategory;
   public getHashtags = getHashtags;
-  public searchNotesByHashtag = searchNotesByHashtag;
+  public searchHashtagsByKeyword = searchHashtagsByKeyword;
   public getHashtagDetail = getHashtagDetail;
   public getContests = getContests;
   public getRecommendMetadata = getRecommendMetadata;
   public getMkitLayouts = getMkitLayouts;
-  public searchUserByUsername = searchUserByUsername;
-  public signIn = signIn;
-  public createNote = createNote;
-  public editNote = editNote;
-  public uploadEyecatch = uploadEyecatch;
-  public deleteNote = deleteNote;
-  public draftDelete = draftDelete;
 }

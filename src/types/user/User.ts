@@ -52,4 +52,8 @@ export type User = {
   storeUrl: string;
   jobSourceUrl: string | null;
   isHavingSubscribableMagazines: boolean;
+  isCreatorQaTabEnabled?: boolean;
+  dmAcceptEnabled?: string;
+  dmAcceptSetting?: Record<string, boolean>;
+  canSendDm?: boolean;
 };

@@ -1,5 +1,10 @@
-import { NoteAPIClient } from "../client";
+import type { NoteAPIClient } from "../client";
+import type { CategoriesResponse } from "../types/category/Category";
 
-export async function getCategories(this: NoteAPIClient, {}: {}): Promise<any> {
-  return this.get<any>(`${this.BASE_URL}/v2/categories`, {});
+/** Lists note categories. GET /v2/categories */
+export async function getCategories(
+  this: NoteAPIClient,
+  _params: {} = {},
+): Promise<CategoriesResponse> {
+  return this.get<CategoriesResponse>(`${this.BASE_URL}/v2/categories`);
 }

@@ -20,7 +20,7 @@ export interface HashtagSearchNote {
     user: HashtagSearchNoteUser;
     audio: unknown | null;
     pictures: unknown[];
-    external_url: string;
+    external_url: string | null;
     like_count: number;
     is_liked: boolean;
     custom_domain: CustomDomain | null;

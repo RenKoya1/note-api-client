@@ -14,7 +14,7 @@ export interface CategoryNote {
     user_id: number;
     name: string;
     description: string | null;
-    tweet_text: string;
+    tweet_text: string | null;
     twitter_share_url: string;
     facebook_share_url: string;
     line_share_url: string;
@@ -48,10 +48,10 @@ export interface CategoryNote {
     is_purchased: boolean;
     is_magazine_purchased: boolean;
     is_available: boolean;
-    eyecatch: string | null;
-    eyecatch_width: number | null;
-    eyecatch_height: number | null;
-    sp_eyecatch: string;
+    eyecatch?: string | null;
+    eyecatch_width?: number | null;
+    eyecatch_height?: number | null;
+    sp_eyecatch: string | null;
     has_draft: boolean;
     is_draft: boolean | null;
     is_published: boolean;
@@ -74,11 +74,15 @@ export interface CategoryNotePicture {
     caption: string | null;
     url: string;
     key: string;
+    thumbnail_url?: string;
+    width?: number;
+    height?: number;
 }
 
 export interface CategoryNoteEmbeddedContent {
     caption: string | null;
-    key: string;
+    key?: string;
+    [key: string]: unknown;
 }
 
 export interface CategoryNoteUser {
@@ -124,7 +128,12 @@ export interface CategoryHashtagNote {
  * Response from category search endpoint GET /v1/categories/{category}
  */
 export interface CategorySearchResponse {
+    /** null when the category slug does not exist. */
+    category_id: number | null;
     notes: CategoryNote[];
+    first_page: boolean;
     next_page: number | null;
+    last_page: boolean;
+    /** @deprecated Alias of `last_page` kept for backward compatibility. */
     is_last_page: boolean;
 }
