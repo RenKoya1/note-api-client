@@ -1,12 +1,11 @@
-import { CustomDomain } from "../note/common";
+import { CustomDomain, NoteStatus, NoteType } from "../note/common";
 
 /** One entry of GET /v2/contests (camelCase keys). */
 export interface Contest {
   id: number;
   key: string;
   name: string;
-  /** e.g. "opened", "finished". */
-  state: string;
+  state: "opened" | "closed" | "finished" | (string & {});
   type: string;
   category: string;
   categories: unknown[];
@@ -25,8 +24,8 @@ export interface Contest {
   /** Announcement note of the contest. */
   note: {
     id: number;
-    type: string;
-    status: string;
+    type: NoteType;
+    status: NoteStatus;
     name: string;
     key: string;
     eyecatch: string | null;

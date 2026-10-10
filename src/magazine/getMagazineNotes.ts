@@ -10,7 +10,7 @@ import type { MagazineNotesResponse } from "../types/magazine/Magazine";
  */
 export async function getMagazineNotes(
   this: NoteAPIClient,
-  { key, page = 1 }: { key: string; page?: number },
+  { key, page = 1 }: { key: string; page?: number | undefined },
 ): Promise<MagazineNotesResponse> {
   return this.get<MagazineNotesResponse>(
     `${this.BASE_URL}/v1/magazines/${pathSegment("key", key)}/notes`,

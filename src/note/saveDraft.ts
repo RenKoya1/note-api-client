@@ -27,8 +27,8 @@ export async function saveDraft(
     id: string | number;
     title: string;
     body: string;
-    isTempSaved?: boolean;
-    index?: boolean;
+    isTempSaved?: boolean | undefined;
+    index?: boolean | undefined;
   },
 ): Promise<SaveDraftResponse> {
   const noteId = requireParam("id", id);

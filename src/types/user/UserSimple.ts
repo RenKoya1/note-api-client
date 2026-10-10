@@ -18,7 +18,7 @@ export type UserSimple = {
   like_appeal_image: string | null;
   twitter_nickname: string | null;
   magazine_add_appeal: {
-    text: string;
+    text: string | null;
     image: string | null;
   };
 };

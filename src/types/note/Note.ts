@@ -1,10 +1,12 @@
+import type { NoteStatus, NoteType } from "./common";
 import { Price } from "../Price";
+import type { DiscountCampaign } from "./NoteDetail";
 import { UserSimple } from "../user/UserSimple";
 
 export type Note = {
   id: number;
-  type: string;
-  status: string;
+  type: NoteType;
+  status: NoteStatus;
   name: string;
   description: string | null;
   price: number;
@@ -12,14 +14,14 @@ export type Note = {
   slug: string;
   publish_at: string;
   thumbnail_external_url: string;
-  eyecatch: string;
+  eyecatch: string | null;
   user: UserSimple;
   can_read: boolean;
   is_author: boolean;
   external_url: string | null;
   custom_domain: string | null;
   body: string;
-  separator: string;
+  separator: string | null;
   is_limited: boolean;
   is_trial: boolean;
   can_update: boolean;
@@ -27,7 +29,7 @@ export type Note = {
   is_refund: boolean;
   highlight: string;
   eyecatch_type_2: string | null;
-  sp_eyecatch: string;
+  sp_eyecatch: string | null;
   category: string | null;
   comment_count: number;
   like_count: number;
@@ -35,10 +37,10 @@ export type Note = {
   is_included_private_purchase_magazine: boolean;
   image_count: number;
   format: string;
-  audio: Record<string, any>;
+  audio: Record<string, unknown>;
   is_membership_connected: boolean;
   has_available_circle_plans: boolean;
-  discount_campaigns: any[];
-  pictures: any[];
+  discount_campaigns: DiscountCampaign[];
+  pictures: unknown[];
   price_info: Price;
 };

@@ -1,14 +1,15 @@
 import type { NoteAPIClient } from "../client";
+import type { NoteStatus, NoteType } from "../types/note/common";
 
 export interface CreatedNote {
   id: number;
   key: string;
-  type: string;
+  type: NoteType;
   name: string;
   body: string | null;
   description: string | null;
   user_id: number;
-  status: string;
+  status: NoteStatus;
   price: number;
   publish_at: string | null;
   created_at: string;
@@ -32,7 +33,7 @@ export async function createNote(
     body = "",
   }: {
     title: string;
-    body?: string;
+    body?: string | undefined;
   },
 ): Promise<CreatedNote> {
   const created = await this.post<CreatedNote>(`${this.BASE_URL}/v1/text_notes`, {

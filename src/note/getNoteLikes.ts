@@ -9,7 +9,7 @@ import type { NoteLikesResponse } from "../types/note/Like";
  */
 export async function getNoteLikes(
   this: NoteAPIClient,
-  { key, page = 1 }: { key: string; page?: number },
+  { key, page = 1 }: { key: string; page?: number | undefined },
 ): Promise<NoteLikesResponse> {
   return this.get<NoteLikesResponse>(
     `${this.BASE_URL}/v3/notes/${pathSegment("key", key)}/likes`,

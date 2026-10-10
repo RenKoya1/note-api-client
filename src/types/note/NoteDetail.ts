@@ -1,4 +1,4 @@
-import { AppealContent } from "./common";
+import { AppealContent, NoteStatus, NoteType } from "./common";
 
 /**
  * Full note detail response from GET /v3/notes/{key}
@@ -6,8 +6,8 @@ import { AppealContent } from "./common";
 export interface NoteDetail {
   id: number;
   user_id: number;
-  status: "published" | "draft" | string;
-  type: string;
+  status: NoteStatus;
+  type: NoteType;
   key: string;
   slug: string;
   name: string;
@@ -228,6 +228,8 @@ export interface DiscountCampaign {
   kind: string;
   status: string;
   discounted_price: number;
+  /** Present on list endpoints; null when the campaign is not a time sale. */
+  time_sale?: { start_at: string; end_at: string; active: boolean } | null;
 }
 
 export interface NoteShareProviderDetails {

@@ -1,12 +1,13 @@
 /** One entry of GET /v2/categories */
 export interface Category {
-  /** Missing for the "注目" pseudo category. */
-  id?: number;
+  /** Missing for "注目" and null for topic categories (business, lifestyle, design). */
+  id?: number | null;
   name: string;
   /** Slug to pass to searchNotesByCategory (e.g. "tech"). Missing for "注目". */
   engName?: string;
   order: number;
-  endpoint: string;
+  /** API URL of the category's note list; null for topic categories. */
+  endpoint: string | null;
   url?: string;
 }
 

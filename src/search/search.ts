@@ -5,10 +5,10 @@ import type { SearchContext, SearchSort } from "../types/search/Search";
 export interface SearchParams {
   keyword: string;
   /** Results per request. note.com caps this at 20. */
-  size?: number;
+  size?: number | undefined;
   /** Offset of the first result. Use `Number(response.<context>_cursor)` for the next page. */
-  start?: number;
-  sort?: SearchSort;
+  start?: number | undefined;
+  sort?: SearchSort | undefined;
 }
 
 /** Shared implementation of GET /v3/searches. */

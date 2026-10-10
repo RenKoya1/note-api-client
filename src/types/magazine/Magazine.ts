@@ -1,4 +1,4 @@
-import { CustomDomain } from "../note/common";
+import { CustomDomain, NoteStatus, NoteType } from "../note/common";
 
 export interface MagazineUser {
   id: number;
@@ -81,18 +81,18 @@ export interface MagazineNote {
   name: string;
   body: string | null;
   external_url: string | null;
-  type: string;
+  type: NoteType;
   eyecatch: string | null;
   description: string | null;
   price: number;
-  status: string;
+  status: NoteStatus;
   created_at: string;
   publish_at: string;
+  pictures?: unknown[];
   user: {
-    id: number;
     urlname: string;
     nickname: string;
-    user_profile_image_path: string;
+    is_me: boolean;
     [key: string]: unknown;
   };
   is_purchased: boolean;
@@ -101,7 +101,7 @@ export interface MagazineNote {
 }
 
 /** Response of GET /v1/magazines/{key}/notes (100 notes per page). */
-export interface MagazineNotesResponse extends Omit<MagazineDetail, "editors" | "editors_count"> {
+export interface MagazineNotesResponse extends MagazineDetail {
   notes: MagazineNote[];
   next_page: number | null;
   prev_page: number | null;

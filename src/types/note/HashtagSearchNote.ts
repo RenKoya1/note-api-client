@@ -1,12 +1,13 @@
-import { CustomDomain } from "./common";
+import type { DiscountCampaign } from "./NoteDetail";
+import { CustomDomain, NoteStatus, NoteType } from "./common";
 
 /**
  * Note type returned from hashtag search endpoint
  * GET /v3/hashtags/{hashtag}/notes
  */
 export interface HashtagSearchNote {
-    type: string;
-    status: string;
+    type: NoteType;
+    status: NoteStatus;
     name: string;
     description: string | null;
     price: number;
@@ -40,12 +41,7 @@ export interface HashtagSearchNoteUser {
     custom_domain: CustomDomain | null;
 }
 
-export interface HashtagNoteDiscountCampaign {
-    key: string;
-    kind: string;
-    status: string;
-    discounted_price: number;
-}
+export type HashtagNoteDiscountCampaign = DiscountCampaign;
 
 /**
  * Response from hashtag search endpoint GET /v3/hashtags/{hashtag}/notes

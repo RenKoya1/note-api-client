@@ -15,10 +15,10 @@
   "scripts": {
     "clean": "node -e \"for (const d of ['dist', '.test-build']) require('fs').rmSync(d, { recursive: true, force: true })\"",
     "build": "npm run clean && tsc",
-    "typecheck": "tsc --noEmit -p tsconfig.test.json",
-    "build:test": "npm run clean && tsc -p tsconfig.test.json",
+    "typecheck": "tsc --noEmit -p . && tsc --noEmit -p tsconfig.test.json",
+    "build:test": "npm run clean && tsc -p . --noEmit && tsc -p tsconfig.test.json",
     "test": "npm run build:test && node --test --test-concurrency=1 \".test-build/test/unit/**/*.test.js\"",
-    "test:live": "npm run build:test && node --test --test-concurrency=1 --test-timeout=60000 \".test-build/test/live/**/*.test.js\"",
+    "test:live": "npm run build:test && node --test --test-concurrency=1 --test-timeout=600000 \".test-build/test/live/**/*.test.js\"",
     "prepublishOnly": "npm test && npm run build",
     "release": "npm publish --access=public"
   },

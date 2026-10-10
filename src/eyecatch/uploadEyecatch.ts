@@ -47,8 +47,8 @@ export async function uploadEyecatch(
     image,
   }: {
     id: string | number;
-    imageUrl?: string;
-    image?: ImageInput;
+    imageUrl?: string | undefined;
+    image?: ImageInput | undefined;
   },
 ): Promise<{ url: string }> {
   const noteId = requireParam("id", id);

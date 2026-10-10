@@ -1,9 +1,9 @@
-import { CustomDomain } from "../note/common";
+import { CustomDomain, NoteType } from "../note/common";
 
 export interface MkitNote {
   id: number;
   key: string;
-  type: string;
+  type: NoteType;
   name: string;
   publish_at: string;
   eyecatch_url: string | null;

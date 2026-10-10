@@ -6,12 +6,12 @@ export interface NoteLike {
   user: {
     id: number;
     key: string;
-    nickname: string;
+    nickname: string | null;
     urlname: string;
-    profile: string;
+    profile: string | null;
     is_no_urlname_user: boolean;
-    original_header_image_url: string;
-    header_image_url: string;
+    original_header_image_url: string | null;
+    header_image_url: string | null;
     user_profile_image_url: string;
     is_me: boolean;
     follower_count: number;

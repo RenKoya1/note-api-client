@@ -18,10 +18,10 @@ export async function searchNotesByCategory(
     order = "popular",
   }: {
     category: string;
-    page?: number;
-    order?: "new" | "popular" | "hot";
+    page?: number | undefined;
+    order?: "new" | "popular" | "hot" | undefined;
     /** @deprecated note.com no longer filters categories by price; this option is ignored. */
-    paid_only?: boolean;
+    paid_only?: boolean | undefined;
   },
 ): Promise<CategorySearchResponse> {
   const data = await this.get<Omit<CategorySearchResponse, "is_last_page">>(

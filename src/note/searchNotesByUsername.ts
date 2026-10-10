@@ -10,7 +10,7 @@ import type { UserNotesResponse } from "../types/note/UserNote";
  */
 export async function searchNotesByUsername(
   this: NoteAPIClient,
-  { username, page = 1 }: { username: string; page?: number },
+  { username, page = 1 }: { username: string; page?: number | undefined },
 ): Promise<UserNotesResponse> {
   return this.get<UserNotesResponse>(
     `${this.BASE_URL}/v2/creators/${pathSegment("username", username)}/contents`,

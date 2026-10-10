@@ -1,4 +1,5 @@
-import { AppealContent } from "./common";
+import type { DiscountCampaign } from "./NoteDetail";
+import { AppealContent, NoteStatus, NoteType } from "./common";
 
 /**
  * Note type returned from username search endpoint
@@ -6,8 +7,8 @@ import { AppealContent } from "./common";
  */
 export interface UserNote {
     id: number;
-    type: string;
-    status: string;
+    type: NoteType;
+    status: NoteStatus;
     name: string;
     description: string | null;
     likeCount: number;
@@ -102,12 +103,7 @@ export interface UserNoteCapabilities {
     noteComment: boolean;
 }
 
-export interface UserNoteDiscountCampaign {
-    key: string;
-    kind: string;
-    status: string;
-    discounted_price: number;
-}
+export type UserNoteDiscountCampaign = DiscountCampaign;
 
 export interface PriceInfo {
     isFree: boolean;

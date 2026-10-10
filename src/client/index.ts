@@ -43,19 +43,23 @@ export interface NoteAPIClientOptions {
    * Cookie header value of a logged-in note.com session, e.g.
    * `"_note_session_v5=xxxxxxxx"`. Required for write operations.
    */
-  cookies?: string;
+  cookies?: string | undefined;
   /**
    * HTTP(S) proxy URL every request is routed through. Invalid values are
    * ignored with a warning and requests go out directly.
    */
-  proxyUrl?: string;
+  proxyUrl?: string | undefined;
   /** Request timeout in milliseconds. Defaults to 14000. */
-  timeout?: number;
+  timeout?: number | undefined;
   /** User-Agent header sent with every request. */
-  userAgent?: string;
+  userAgent?: string | undefined;
 }
 
 type Params = Record<string, unknown>;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
 
 // An unusable proxy URL (e.g. an undecrypted "encrypted:..." secret leaking
 // through from env tooling) would make every request fail with an empty
@@ -164,10 +168,10 @@ export class NoteAPIClient {
    * Throws NoteAPIError for HTTP errors and for 2xx responses carrying an
    * `error` body.
    */
-  public async request<T>(
+  public async request<T = unknown>(
     method: Method,
     url: string,
-    options: { params?: Params; data?: unknown } = {},
+    options: { params?: Params | undefined; data?: unknown } = {},
   ): Promise<T> {
     const { data } = options;
     const params = compactParams(options.params);
@@ -190,8 +194,8 @@ export class NoteAPIClient {
       const body = res?.data;
       const parsed =
         parseErrorBody(body) ??
-        (body && typeof body === "object" && typeof body.data === "string"
-          ? { code: undefined, message: body.data as string }
+        (isRecord(body) && typeof body.data === "string"
+          ? { code: undefined, message: body.data }
           : undefined);
       const status = res?.status;
       throw new NoteAPIError({
@@ -218,7 +222,7 @@ export class NoteAPIClient {
         body,
       });
     }
-    if (body === null || typeof body !== "object" || !("data" in body)) {
+    if (!isRecord(body) || !("data" in body)) {
       throw new NoteAPIError({
         message: `note API returned an unexpected response: ${upperMethod} ${url} -> ${response.status}`,
         method: upperMethod,
@@ -227,24 +231,27 @@ export class NoteAPIClient {
         body,
       });
     }
-    const csrfToken = (body as any).data?.csrf_token;
-    if (typeof csrfToken === "string") this.csrfToken = csrfToken;
-    return (body as any).data as T;
+    if (isRecord(body.data) && typeof body.data.csrf_token === "string") {
+      this.csrfToken = body.data.csrf_token;
+    }
+    // The payload shape is described by T; it is checked against the live
+    // API by the contract tests (npm run test:live).
+    return body.data as T;
   }
 
-  public get<T>(url: string, params?: Params): Promise<T> {
+  public get<T = unknown>(url: string, params?: Params): Promise<T> {
     return this.request<T>("GET", url, { params });
   }
 
-  public post<T>(url: string, data?: unknown, params?: Params): Promise<T> {
+  public post<T = unknown>(url: string, data?: unknown, params?: Params): Promise<T> {
     return this.request<T>("POST", url, { data, params });
   }
 
-  public put<T>(url: string, data?: unknown, params?: Params): Promise<T> {
+  public put<T = unknown>(url: string, data?: unknown, params?: Params): Promise<T> {
     return this.request<T>("PUT", url, { data, params });
   }
 
-  public delete<T>(url: string, data?: unknown, params?: Params): Promise<T> {
+  public delete<T = unknown>(url: string, data?: unknown, params?: Params): Promise<T> {
     return this.request<T>("DELETE", url, { data, params });
   }
 

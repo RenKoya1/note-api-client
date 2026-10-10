@@ -15,8 +15,8 @@ export async function getMkitLayouts(
     context = "category_challenge",
     page = 1,
   }: {
-    context?: "category_challenge" | (string & {});
-    page?: number;
+    context?: "category_challenge" | (string & {}) | undefined;
+    page?: number | undefined;
   } = {},
 ): Promise<MkitLayoutsResponse> {
   return this.get<MkitLayoutsResponse>(`${this.BASE_URL}/v3/mkit_layouts/json`, {

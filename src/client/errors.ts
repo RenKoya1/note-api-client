@@ -10,26 +10,26 @@
  */
 export class NoteAPIError extends Error {
   /** HTTP status code, or undefined when no response was received. */
-  public readonly status?: number;
+  public readonly status: number | undefined;
   /** Error code reported by note.com (e.g. "not_login", "required_recaptcha", "bad_request"). */
-  public readonly code?: string;
+  public readonly code: string | undefined;
   /** HTTP method of the failed request. */
   public readonly method: string;
   /** Request URL of the failed request. */
   public readonly url: string;
   /** Raw response body, if any. */
-  public readonly body?: unknown;
+  public readonly body: unknown;
 
   constructor(params: {
     message: string;
     method: string;
     url: string;
-    status?: number;
-    code?: string;
+    status?: number | undefined;
+    code?: string | undefined;
     body?: unknown;
     cause?: unknown;
   }) {
-    super(params.message, { cause: params.cause });
+    super(params.message, params.cause === undefined ? undefined : { cause: params.cause });
     this.name = "NoteAPIError";
     this.status = params.status;
     this.code = params.code;
@@ -45,10 +45,10 @@ export class NoteAPIError extends Error {
  */
 export function parseErrorBody(
   body: unknown,
-): { code?: string; message: string } | undefined {
+): { code: string | undefined; message: string } | undefined {
   if (body === null || typeof body !== "object") return undefined;
   const err = (body as Record<string, unknown>).error;
-  if (typeof err === "string") return { message: err };
+  if (typeof err === "string") return { code: undefined, message: err };
   if (err && typeof err === "object") {
     const e = err as Record<string, unknown>;
     const code =

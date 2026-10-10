@@ -1,3 +1,4 @@
+import type { NoteStatus, NoteType } from "./common";
 /**
  * Note type returned from category/hashtag search endpoints
  * GET /v1/categories/{category}
@@ -10,7 +11,7 @@ export interface CategoryNote {
     body: string;
     external_url: string | null;
     separator: string | null;
-    type: string;
+    type: NoteType;
     user_id: number;
     name: string;
     description: string | null;
@@ -24,7 +25,7 @@ export interface CategoryNote {
     pictures: CategoryNotePicture[];
     embedded_contents: CategoryNoteEmbeddedContent[];
     audio: unknown | null;
-    status: string;
+    status: NoteStatus;
     publish_at: string;
     price: number;
     created_at: string;

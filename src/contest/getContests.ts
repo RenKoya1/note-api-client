@@ -11,7 +11,7 @@ import type { ContestsResponse } from "../types/contest/Contest";
  */
 export async function getContests(
   this: NoteAPIClient,
-  { order, group }: { order?: "priority" | (string & {}); group?: boolean } = {},
+  { order, group }: { order?: "priority" | (string & {}) | undefined; group?: boolean | undefined } = {},
 ): Promise<ContestsResponse> {
   return this.get<ContestsResponse>(`${this.BASE_URL}/v2/contests`, { order, group });
 }

@@ -1,12 +1,17 @@
 import type { NoteAPIClient } from "../client";
 import { NoteAPIError } from "../client/errors";
 
-interface SignInRequest {
+export interface SignInResponse {
+  csrf_token?: string | undefined;
+  [key: string]: unknown;
+}
+
+export interface SignInRequest {
   /** reCAPTCHA Enterprise token from the note.com login page. */
   g_recaptcha_response: string;
   login: string;
   password: string;
-  redirect_path?: string;
+  redirect_path?: string | undefined;
 }
 
 /**
@@ -29,10 +34,10 @@ export async function signIn(
     password,
     redirect_path = "https://note.com/",
   }: SignInRequest,
-): Promise<any> {
+): Promise<SignInResponse> {
   const endpoint = `${this.BASE_URL}/v1/sessions/sign_in`;
   try {
-    return await this.post<any>(endpoint, {
+    return await this.post<SignInResponse>(endpoint, {
       g_recaptcha_response,
       login,
       password,

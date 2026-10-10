@@ -19,9 +19,9 @@ export async function searchNotesByHashtag(
     paid_only = false,
   }: {
     hashtag: string;
-    page?: number;
-    order?: "new" | "popular" | "hot";
-    paid_only?: boolean;
+    page?: number | undefined;
+    order?: "new" | "popular" | "hot" | undefined;
+    paid_only?: boolean | undefined;
   },
 ): Promise<HashtagSearchResponse> {
   return this.get<HashtagSearchResponse>(

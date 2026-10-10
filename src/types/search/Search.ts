@@ -22,7 +22,8 @@ export interface SearchResult<T> {
 }
 
 /**
- * Cursor fields present on every GET /v3/searches response. The next page
+ * Fields present on every GET /v3/searches response. Sections other than the
+ * requested `context` are empty objects. The next page
  * starts at `Number(<context>_cursor)` (pass it as `start`).
  */
 export interface SearchCursors {
@@ -33,4 +34,10 @@ export interface SearchCursors {
   circle_cursor: string;
   note_for_sale_cursor: string;
   cursor: Cursor;
+  notes: Partial<SearchResult<unknown>>;
+  users: Partial<SearchResult<unknown>>;
+  magazines: Partial<SearchResult<unknown>>;
+  hashtags: Partial<SearchResult<unknown>>;
+  circles: Partial<SearchResult<unknown>>;
+  notes_for_sale: Partial<SearchResult<unknown>>;
 }

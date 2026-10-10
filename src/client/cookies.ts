@@ -20,7 +20,7 @@ function parseCookieHeader(header: string): Map<string, string> {
 
 function isExpired(attributes: string[]): boolean {
   for (const attr of attributes) {
-    const [rawName, ...rest] = attr.split("=");
+    const [rawName = "", ...rest] = attr.split("=");
     const name = rawName.trim().toLowerCase();
     const value = rest.join("=").trim();
     if (name === "max-age" && Number(value) <= 0) return true;
@@ -43,7 +43,7 @@ export function mergeCookies(
   if (!setCookies || setCookies.length === 0) return current;
   const jar = parseCookieHeader(current ?? "");
   for (const setCookie of setCookies) {
-    const [pair, ...attributes] = setCookie.split(";");
+    const [pair = "", ...attributes] = setCookie.split(";");
     const eq = pair.indexOf("=");
     if (eq <= 0) continue;
     const name = pair.slice(0, eq).trim();

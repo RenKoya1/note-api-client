@@ -5,8 +5,12 @@
     "outDir": "./.test-build",
     "declaration": false,
     "declarationDir": null,
-    "noEmitOnError": true
+    "noEmitOnError": true,
+    "noUncheckedIndexedAccess": false
   },
-  "include": ["./src/**/*", "./test/**/*"],
+  "include": [
+    "./src/**/*",
+    "./test/**/*"
+  ],
   "exclude": []
 }

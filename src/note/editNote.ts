@@ -1,5 +1,18 @@
 import type { NoteAPIClient } from "../client";
 import { pathSegment } from "../client/params";
+import type { NoteStatus } from "../types/note/common";
+
+/**
+ * Response of PUT /v1/text_notes/{id}. Only the fields this library relies
+ * on are declared; check them before use.
+ */
+export interface EditNoteResponse {
+  id?: number | undefined;
+  key?: string | undefined;
+  status?: NoteStatus | undefined;
+  note_url?: string | undefined;
+  [key: string]: unknown;
+}
 
 /**
  * Publishes a note (or updates a published one). PUT /v1/text_notes/{id}
@@ -22,10 +35,10 @@ export async function editNote(
     id: string | number;
     title: string;
     body: string;
-    eyecatchImageKey?: string;
-    index?: boolean;
+    eyecatchImageKey?: string | undefined;
+    index?: boolean | undefined;
   },
-): Promise<any> {
+): Promise<EditNoteResponse> {
   const data: Record<string, unknown> = {
     status: "published",
     name: title,
@@ -34,5 +47,5 @@ export async function editNote(
   };
   if (eyecatchImageKey !== undefined) data.eyecatch_image_key = eyecatchImageKey;
 
-  return this.put<any>(`${this.BASE_URL}/v1/text_notes/${pathSegment("id", id)}`, data);
+  return this.put<EditNoteResponse>(`${this.BASE_URL}/v1/text_notes/${pathSegment("id", id)}`, data);
 }

@@ -11,7 +11,7 @@ import { getFollows } from "./follows";
  */
 export async function getFollowings(
   this: NoteAPIClient,
-  params: { key: string; page?: number; per?: number },
+  params: { key: string; page?: number | undefined; per?: number | undefined },
 ): Promise<FollowsResponse> {
   return getFollows(this, "followings", params);
 }
