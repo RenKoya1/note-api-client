@@ -1,21 +1,26 @@
 {
   "name": "note-api-client",
-  "version": "0.0.33",
+  "version": "0.1.0",
   "description": "A comprehensive Node.js and TypeScript client library for note.com API - Search notes, manage content, handle authentication, and automate your note.com workflow with full TypeScript support",
   "license": "Apache-2.0",
   "main": "dist/index.js",
-  "module": "dist/index.js",
   "homepage": "https://github.com/RenKoya1/note-api-client",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.js"
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "scripts": {
-    "build": "tsc",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "release": "npm run build && npm publish --access=public"
+    "clean": "node -e \"for (const d of ['dist', '.test-build']) require('fs').rmSync(d, { recursive: true, force: true })\"",
+    "build": "npm run clean && tsc",
+    "typecheck": "tsc --noEmit -p tsconfig.test.json",
+    "build:test": "npm run clean && tsc -p tsconfig.test.json",
+    "test": "npm run build:test && node --test --test-concurrency=1 \".test-build/test/unit/**/*.test.js\"",
+    "test:live": "npm run build:test && node --test --test-concurrency=1 --test-timeout=60000 \".test-build/test/live/**/*.test.js\"",
+    "prepublishOnly": "npm test && npm run build",
+    "release": "npm publish --access=public"
   },
   "engines": {
     "node": ">=20"
@@ -44,5 +49,6 @@
     "@types/node": "^22.15.30",
     "dotenv": "^16.6.1",
     "typescript": "^5.9.3"
-  }
+  },
+  "types": "dist/index.d.ts"
 }

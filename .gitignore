@@ -72,3 +72,5 @@ node_modules/
 
 
 .npmrc
+# test build output
+.test-build/
