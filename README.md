@@ -1,466 +1,267 @@
 # note-api-client
 
-[![Version badge](https://img.shields.io/github/v/release/RenKoya1/note-api-client?include_prereleases)](https://github.com//RenKoya1/note-api-client)
+[![Version badge](https://img.shields.io/github/v/release/RenKoya1/note-api-client?include_prereleases)](https://github.com/RenKoya1/note-api-client)
 [![npm version](https://img.shields.io/npm/v/note-api-client)](https://www.npmjs.com/package/note-api-client)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D20-brightgreen.svg)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 
-**note-api-client** is a comprehensive **Node.js and TypeScript library** for interacting with the **note.com API**. Build powerful integrations, automate content management, and access note.com's rich features programmatically with ease.
+**note-api-client** is a fully typed Node.js / TypeScript client for the (unofficial) **note.com API**:
+search notes, users, magazines and hashtags, read note details, comments and likes, and create,
+save, publish and delete your own notes.
 
-## ✨ Features
+- Every response is typed, and the types are checked against the live API by the test suite
+- No `any` in the public API; works with `strict`, `noUncheckedIndexedAccess` and `exactOptionalPropertyTypes`
+- Errors are thrown as `NoteAPIError` with `status`, `code` and the raw `body`
+- Optional proxy support and a cookie jar that keeps your session alive
 
-- 🔍 **Search & Discovery**: Search notes by keyword, username, category, and hashtag
-- 📝 **Content Management**: Create, edit, and manage notes programmatically
-- 👥 **User Operations**: Fetch user profiles, followers, followings, and user content
-- 📰 **Magazine Support**: Access and search magazine content
-- 🏷️ **Hashtag & Category**: Browse trending hashtags and explore categories
-- 🔐 **Authentication**: Built-in sign-in support for authenticated operations
-- 🖼️ **Media Upload**: Upload eyecatch images for your notes
-- 💬 **Comments**: Retrieve note comments and engagement data
-- 📊 **Recommendations**: Access recommended content metadata
-- 🎨 **MKit Layouts**: Fetch creative layout configurations
-- 🎯 **Contests**: Browse note.com contests and campaigns
-- ⚡ **TypeScript First**: Full type safety and IntelliSense support
-- 🚀 **Promise-based API**: Modern async/await syntax
-- 📦 **Zero Config**: Works out of the box with sensible defaults
+> note.com does not publish an official API. Endpoints can change at any time; run
+> `npm run test:live` to check that everything still works.
 
-## 📦 Installation
-
-Install via npm:
+## Installation
 
 ```sh
 npm install note-api-client
 ```
 
-Install via yarn:
-
-```sh
-yarn add note-api-client
-```
-
-Install via pnpm:
-
-```sh
-pnpm add note-api-client
-```
-
-## 🚀 Quick Start
+## Quick start
 
 ```ts
 import { NoteAPIClient } from "note-api-client";
 
-// Initialize the client
 const client = new NoteAPIClient();
 
-// Search notes by keyword
-const notes = await client.searchNotesByKeyword({
-  phrase: "JavaScript",
-});
+const res = await client.searchNotesByKeyword({ keyword: "TypeScript", sort: "new" });
+for (const note of res.notes.contents) {
+  console.log(note.name, note.user.nickname, note.like_count);
+}
 
-// Get user's notes
-const userNotes = await client.searchNotesByUsername({
-  username: "your_username",
-});
-
-// Get note details
-const noteDetail = await client.getNoteDetail({
-  noteKey: "note_key_here",
-});
+const detail = await client.getNoteDetail({ key: "n1a0b26f944f4" });
+console.log(detail.body);
 ```
 
-## 📚 API Reference
-
-### Search Operations
-
-#### Search Notes by Keyword
+## Client options
 
 ```ts
-const notes = await client.searchNotesByKeyword({
-  phrase: "AI technology",
-  page: 1,
+const client = new NoteAPIClient({
+  cookies: "_note_session_v5=...", // logged-in session (required for write operations)
+  proxyUrl: "http://user:pass@proxy:8080", // optional; invalid URLs are ignored with a warning
+  timeout: 14000, // ms
+  userAgent: "...", // optional
+});
+
+// The positional form still works:
+new NoteAPIClient("_note_session_v5=...", "http://proxy:8080");
+```
+
+## API
+
+All methods take a single object argument and return a typed promise.
+
+### Search (`GET /v3/searches`)
+
+`size` is capped at **20** by note.com. To get the next page, pass the returned
+`<context>_cursor` as `start`.
+
+| Method | Params | Returns |
+| --- | --- | --- |
+| `searchNotesByKeyword` | `keyword`, `size?`, `start?`, `sort?: "popular" \| "new" \| "like" \| "hot"` | `NoteSearchResponse` |
+| `searchUsersByKeyword` | `keyword`, `size?`, `start?` | `UserSearchResponse` |
+| `searchMagazinesByKeyword` | `keyword`, `size?`, `start?` | `MagazineSearchResponse` |
+| `searchHashtagsByKeyword` | `keyword`, `size?`, `start?` | `HashtagKeywordSearchResponse` |
+
+```ts
+const page1 = await client.searchNotesByKeyword({ keyword: "AI", size: 20 });
+const page2 = await client.searchNotesByKeyword({
+  keyword: "AI",
+  size: 20,
+  start: Number(page1.note_cursor),
 });
 ```
 
-#### Search Notes by Username
+### Notes
+
+| Method | Params | Returns |
+| --- | --- | --- |
+| `getNoteDetail` | `key` (e.g. `"n1a0b26f944f4"`) | `NoteDetail` |
+| `getComments` | `id` (numeric `NoteDetail.id`) | `CommentsResponse` |
+| `getNoteLikes` | `key`, `page?` (50 per page) | `NoteLikesResponse` |
+| `searchNotesByUsername` | `username` (urlname), `page?` | `UserNotesResponse` |
+| `searchNotesByCategory` | `category` (slug, e.g. `"tech"`), `order?: "popular" \| "new" \| "hot"`, `page?` | `CategorySearchResponse` |
+| `searchNotesByHashtag` | `hashtag` (with or without `#`), `order?: "popular" \| "new" \| "hot"`, `paid_only?`, `page?` | `HashtagSearchResponse` |
 
 ```ts
-const userNotes = await client.searchNotesByUsername({
-  username: "example_user",
-  page: 1,
-});
+const tech = await client.searchNotesByCategory({ category: "tech", order: "new" });
+if (!tech.last_page) {
+  await client.searchNotesByCategory({ category: "tech", order: "new", page: tech.next_page ?? 2 });
+}
+
+const paid = await client.searchNotesByHashtag({ hashtag: "#AI", order: "new", paid_only: true });
 ```
 
-#### Search Notes by Category
+Category slugs are the `engName` values returned by `getCategories()`.
+
+### Users
+
+| Method | Params | Returns |
+| --- | --- | --- |
+| `searchUserByUsername` | `username` | `User` |
+| `getFollowers` | `key` (32-char user key), `page?`, `per?` (1–20) | `FollowsResponse` |
+| `getFollowings` | `key`, `page?`, `per?` (1–20) | `FollowsResponse` |
+| `getCurrentUser` | – (requires cookies) | `CurrentUser` |
 
 ```ts
-const categoryNotes = await client.searchNotesByCategory({
-  categoryName: "tech",
-  page: 1,
-});
+const user = await client.searchUserByUsername({ username: "info" });
+const followers = await client.getFollowers({ key: user.key, page: 1 });
+console.log(followers.total_count, followers.is_last_page);
 ```
 
-#### Search Notes by Hashtag
+`per` above 20 throws a `RangeError`, because note.com silently returns an empty list for it.
 
-```ts
-const hashtagNotes = await client.searchNotesByHashtag({
-  hashtag: "programming",
-  page: 1,
-});
-```
+### Magazines
 
-### Content Management
+| Method | Params | Returns |
+| --- | --- | --- |
+| `getMagazineDetail` | `key` (e.g. `"m891c62a08b36"`) | `MagazineDetail` |
+| `getMagazineNotes` | `key`, `page?` (100 per page) | `MagazineNotesResponse` |
+| `searchMagazinesByUsername` | `username`, `page?` | `CreatorMagazinesResponse` |
 
-#### Create Note
+### Hashtags, categories and others
 
-```ts
-const newNote = await client.createNote({
-  title: "My First Note",
-  body: "<p>This is the content of my note.</p>",
-});
-```
+| Method | Params | Returns |
+| --- | --- | --- |
+| `getHashtagDetail` | `hashtag` | `HashtagDetail` (count, related hashtags) |
+| `getCategories` | – | `CategoriesResponse` |
+| `getContests` | `order?`, `group?` | `ContestsResponse` |
+| `getMkitLayouts` | `context?` (`"category_challenge"`), `page?` | `MkitLayoutsResponse` |
+| `getRecommendMetadata` | – | `PageMetadata` |
 
-#### Edit Note (Publish)
+`getHashtags()` is deprecated: note.com removed the hashtag list endpoint, so it always rejects.
+Use `searchHashtagsByKeyword` or `getHashtagDetail(...).relatedHashtags` instead.
 
-```ts
-const published = await client.editNote({
-  id: "123456",
-  title: "Updated Title",
-  body: "<p>Updated content</p>",
-  eyecatchImageKey: "optional_image_key", // optional
-  index: true, // optional: enable table of contents
-});
-```
-
-#### Save Draft
-
-```ts
-const draft = await client.saveDraft({
-  id: "123456",
-  title: "Draft Title",
-  body: "<p>Draft content</p>",
-  isTempSaved: false, // optional (default: true)
-  index: true, // optional: enable table of contents
-});
-```
-
-#### Delete Note
-
-```ts
-await client.deleteNote({ id: "123456" });
-```
-
-#### Delete Draft
-
-```ts
-await client.draftDelete({ id: "123456" });
-```
-
-### Publishing Flow (Full Example)
-
-The recommended flow to create and publish a note:
-
-```ts
-// 1. Sign in
-await client.signIn({
-  login: "your_email@example.com",
-  password: "your_password",
-  g_recaptcha_response: "",
-  redirect_path: "/",
-});
-
-// 2. Create a draft
-const created = await client.createNote({
-  title: "My Article",
-  body: "",
-});
-
-// 3. Save draft with content
-await client.saveDraft({
-  id: created.id.toString(),
-  title: "My Article",
-  body: "<p>Article content here</p>",
-  isTempSaved: false,
-  index: false,
-});
-
-// 4. Publish
-await client.editNote({
-  id: created.id.toString(),
-  title: "My Article",
-  body: "<p>Article content here</p>",
-});
-```
-
-### Table of Contents (目次)
-
-To add a table of contents that auto-generates links from headings, use the `<table-of-contents>` tag and set `index: true` in both `saveDraft` and `editNote`.
-
-#### Supported HTML Tags
-
-| Tag                               | Description             | Appears in TOC? |
-| --------------------------------- | ----------------------- | --------------- |
-| `<table-of-contents>`             | Table of contents block | —               |
-| `<h2>`                            | Large heading           | **Yes**         |
-| `<h3>`                            | Small heading           | No              |
-| `<p>`                             | Paragraph               | No              |
-| `<ul>`, `<ol>`, `<li>`            | Lists                   | No              |
-| `<blockquote>`                    | Quote                   | No              |
-| `<pre><code>`                     | Code block              | No              |
-| `<figure>`, `<img>`               | Image                   | No              |
-| `<hr>`                            | Horizontal rule         | No              |
-| `<strong>`, `<em>`, `<a>`, `<br>` | Inline formatting       | No              |
-
-> **Note:** `<table>` HTML tags are **not supported** and will be stripped by note.com.
-
-#### Building the Body HTML
-
-Every element should have a unique `name` and `id` attribute (UUID v4):
-
-```ts
-import crypto from "crypto";
-const uuid = () => crypto.randomUUID();
-
-const body = [
-  // Table of contents (place before headings)
-  `<table-of-contents name="${uuid()}" id="${uuid()}"><br></table-of-contents>`,
-  // Headings & content
-  `<h2 name="${uuid()}" id="${uuid()}">Introduction</h2>`,
-  `<p name="${uuid()}" id="${uuid()}">First paragraph.</p>`,
-  `<h2 name="${uuid()}" id="${uuid()}">Main Topic</h2>`,
-  `<p name="${uuid()}" id="${uuid()}">Second paragraph.</p>`,
-  `<h3 name="${uuid()}" id="${uuid()}">Sub Topic</h3>`,
-  `<p name="${uuid()}" id="${uuid()}">Details here.</p>`,
-  `<h2 name="${uuid()}" id="${uuid()}">Conclusion</h2>`,
-  `<p name="${uuid()}" id="${uuid()}">Summary.</p>`,
-].join("");
-```
-
-#### Full Example with TOC
-
-```ts
-// 1. Create draft
-const created = await client.createNote({ title: "My Article", body: "" });
-
-// 2. Save draft with index: true
-await client.saveDraft({
-  id: created.id.toString(),
-  title: "My Article",
-  body: body, // HTML with <table-of-contents> and <h2> tags
-  isTempSaved: false,
-  index: true, // Required for TOC
-});
-
-// 3. Publish with index: true
-await client.editNote({
-  id: created.id.toString(),
-  title: "My Article",
-  body: body,
-  index: true, // Required for TOC
-});
-```
-
-### User Operations
-
-#### Search Users by Keyword
-
-```ts
-const users = await client.searchUsersByKeyword({
-  phrase: "developer",
-  page: 1,
-});
-```
-
-#### Search User by Username
-
-```ts
-const user = await client.searchUserByUsername({
-  username: "example_user",
-});
-```
-
-#### Get Followers
-
-```ts
-const followers = await client.getFollowers({
-  username: "example_user",
-  page: 1,
-});
-```
-
-#### Get Followings
-
-```ts
-const followings = await client.getFollowings({
-  username: "example_user",
-  page: 1,
-});
-```
-
-### Magazine Operations
-
-#### Search Magazines by Keyword
-
-```ts
-const magazines = await client.searchMagazinesByKeyword({
-  phrase: "technology",
-  page: 1,
-});
-```
-
-#### Get Magazine Details
-
-```ts
-const magazine = await client.getMagazineDetail({
-  magazineKey: "magazine_key_here",
-});
-```
-
-### Hashtag & Category
-
-#### Get Hashtags
-
-```ts
-const hashtags = await client.getHashtags();
-```
-
-#### Get Hashtag Details
-
-```ts
-const hashtagDetail = await client.getHashtagDetail({
-  hashtag: "nodejs",
-});
-```
-
-#### Get Categories
-
-```ts
-const categories = await client.getCategories();
-```
+## Writing notes
 
 ### Authentication
 
-#### Sign In
+note.com now requires a reCAPTCHA token for `POST /v1/sessions/sign_in`, so `signIn()` only works
+with a real `g_recaptcha_response` and otherwise rejects with code `required_recaptcha`.
+
+For automation, log in with a browser and pass the session cookie:
+
+1. Log in at https://note.com
+2. Open DevTools → Application → Cookies → `https://note.com`
+3. Copy the value of `_note_session_v5`
 
 ```ts
-const session = await client.signIn({
-  login: "your_email@example.com",
-  password: "your_password",
-  g_recaptcha_response: "",
-  redirect_path: "/",
-});
+const client = new NoteAPIClient({ cookies: `_note_session_v5=${process.env.NOTE_SESSION}` });
+const me = await client.getCurrentUser(); // throws NoteAPIError (401/404) if the cookie is invalid
 ```
 
-### Media & Assets
+Treat the cookie like a password. Cookies set by later responses are merged automatically.
 
-#### Upload Eyecatch Image
+### Create, save, publish, delete
+
+| Method | Params | Notes |
+| --- | --- | --- |
+| `createNote` | `title`, `body?` | Creates a draft. note.com ignores the body on creation, so a non-empty body is saved with an extra `saveDraft` call. Returns `CreatedNote` (`id`, `key`, ...) |
+| `saveDraft` | `id`, `title`, `body`, `isTempSaved?` (default `true`), `index?` | Saves the draft body |
+| `uploadEyecatch` | `id`, `image?` (Buffer / Uint8Array / ArrayBuffer / Blob) or `imageUrl?` | PNG, JPEG, GIF, WebP. Attached to the note immediately |
+| `editNote` | `id`, `title`, `body`, `eyecatchImageKey?`, `index?` | Publishes (or updates) the note |
+| `draftDelete` | `id` | Discards the draft. A never-published note becomes `deleted`. Rejects with 404 when there is no draft |
+| `deleteNote` | `id` | Deletes the note |
 
 ```ts
-const eyecatch = await client.uploadEyecatch({
-  imageData: buffer,
-  filename: "image.jpg",
-});
+import fs from "node:fs";
+
+const created = await client.createNote({ title: "My article", body: "<p>Hello</p>" });
+await client.uploadEyecatch({ id: created.id, image: fs.readFileSync("cover.png") });
+await client.editNote({ id: created.id, title: "My article", body: "<p>Hello</p>" });
 ```
 
-### Engagement
+### Table of contents (目次)
 
-#### Get Comments
+Add a `<table-of-contents>` element and pass `index: true` to both `saveDraft` and `editNote`.
+Every block element should have a unique `name` and `id` (UUID). Only `<h2>` headings appear in the
+table of contents. `<table>` is not supported by note.com and is stripped.
 
 ```ts
-const comments = await client.getComments({
-  noteKey: "note_key_here",
-  page: 1,
-});
+import { randomUUID as uuid } from "node:crypto";
+
+const body = [
+  `<table-of-contents name="${uuid()}" id="${uuid()}"><br></table-of-contents>`,
+  `<h2 name="${uuid()}" id="${uuid()}">Introduction</h2>`,
+  `<p name="${uuid()}" id="${uuid()}">First paragraph.</p>`,
+  `<h2 name="${uuid()}" id="${uuid()}">Conclusion</h2>`,
+  `<p name="${uuid()}" id="${uuid()}">Summary.</p>`,
+].join("");
+
+const created = await client.createNote({ title: "My article" });
+await client.saveDraft({ id: created.id, title: "My article", body, isTempSaved: false, index: true });
+await client.editNote({ id: created.id, title: "My article", body, index: true });
 ```
 
-### Additional Features
+Supported tags: `<h2>`, `<h3>`, `<p>`, `<ul>`/`<ol>`/`<li>`, `<blockquote>`, `<pre><code>`,
+`<figure>`/`<img>`, `<hr>`, `<strong>`, `<em>`, `<a>`, `<br>`.
 
-#### Get Recommended Metadata
-
-```ts
-const recommendations = await client.getRecommendMetadata();
-```
-
-#### Get MKit Layouts
+## Error handling
 
 ```ts
-const layouts = await client.getMkitLayouts();
-```
+import { NoteAPIError } from "note-api-client";
 
-#### Get Contests
-
-```ts
-const contests = await client.getContests();
-```
-
-## 🔧 Advanced Usage
-
-### Using Cookies for Authentication
-
-```ts
-const client = new NoteAPIClient("your_session_cookies_here");
-
-// Now you can perform authenticated operations
-const note = await client.createNote({
-  title: "Authenticated Note",
-  body: "This note is created with authentication.",
-});
-```
-
-### Error Handling
-
-```ts
 try {
-  const notes = await client.searchNotesByKeyword({ phrase: "test" });
-  console.log(notes);
-} catch (error) {
-  console.error("Error fetching notes:", error);
+  await client.getNoteDetail({ key: "nnotexist000" });
+} catch (e) {
+  if (e instanceof NoteAPIError) {
+    console.log(e.status); // 400
+    console.log(e.code); // "bad_request"
+    console.log(e.message); // includes method, URL, status and note.com's message
+    console.log(e.body); // raw response body
+  }
 }
 ```
 
-## 🛠️ Requirements
+Invalid arguments (missing ids, `page < 1`, `per > 20`, ...) throw `TypeError` / `RangeError`
+before any request is sent. Some endpoints report errors with HTTP 200 and an `error` body; those
+are thrown as `NoteAPIError` too.
 
-- **Node.js**: >= 20.0.0
-- **TypeScript**: 4.0+ (for TypeScript projects)
+## Low-level access
 
-## 📖 Use Cases
+`client.get / post / put / delete / request` send arbitrary requests with the same headers,
+cookies and error handling. They return `unknown` unless you pass a type:
 
-- **Content Automation**: Automatically publish and manage notes
-- **Analytics Tools**: Build dashboards to track note performance
-- **Social Media Integration**: Cross-post content to note.com
-- **Content Aggregation**: Collect and curate notes by topic
-- **Research Tools**: Analyze trending topics and hashtags
-- **Bot Development**: Create interactive bots for note.com
-- **Data Migration**: Move content to/from note.com
-- **Personal Automation**: Schedule and manage your writing workflow
+```ts
+const top = await client.get<{ articles: { key: string; name: string }[]; next_page: number | null }>(
+  `${client.BASE_URL}/v3/notes/top_articles`,
+);
+```
 
-## 🤝 Contributing
+## Migrating from 0.0.x
 
-Contributions are welcome! We appreciate your help in making this library better.
+- `getFollowers` / `getFollowings` were swapped; they now return followers / followings respectively.
+- `searchNotesByCategory` sends `sort` (note.com ignored `order`), so `order` now takes effect.
+  The response uses `last_page` (`is_last_page` is kept as an alias). `paid_only` had no effect and is deprecated.
+- `searchUsersByKeyword` is typed as `users.contents` (the old type said `content`).
+- `uploadEyecatch` actually uploads now (it used to send JSON and fail with `no_file_selected`) and accepts raw `image` bytes.
+- `createNote` saves the body (note.com used to drop it silently).
+- `editNote` only sends `eyecatch_image_key` when `eyecatchImageKey` is given (it used to send `null`).
+- `getContests()` without `order` returns the newest contests first; pass `order: "priority"` for the old order.
+- `getHashtags` always rejects (endpoint removed by note.com).
+- The library no longer calls `dotenv.config()`; load your `.env` yourself.
+- Errors are `NoteAPIError` instances instead of plain `Error`.
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## Development
 
-Please read our [Contributing Guidelines](CONTRIBUTING.md) for more details.
+```sh
+npm test            # unit tests (no network)
+npm run test:live   # live tests against note.com (read-only)
+npm run typecheck   # strict type check incl. compile-time API assertions
+npm run build
+```
 
-## 📝 License
+`test:live` also checks every response against the exported TypeScript types and reports
+fields note.com added. Logged-in tests run when `NOTE_COOKIE` is set (they create a draft and
+delete it again); `NOTE_LIVE_PUBLISH=1` additionally publishes a test note and deletes it.
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+## License
 
-## 🔗 Links
-
-- [npm Package](https://www.npmjs.com/package/note-api-client)
-- [GitHub Repository](https://github.com/RenKoya1/note-api-client)
-- [Issue Tracker](https://github.com/RenKoya1/note-api-client/issues)
-- [note.com Official Site](https://note.com)
-
-## 🌟 Show Your Support
-
-If you find this library useful, please consider giving it a ⭐ on GitHub!
-
-## 📧 Contact
-
-For questions, suggestions, or feedback, please open an issue on GitHub.
+Apache License 2.0 – see [LICENSE](LICENSE).

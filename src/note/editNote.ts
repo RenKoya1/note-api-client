@@ -18,8 +18,8 @@ export interface EditNoteResponse {
  * Publishes a note (or updates a published one). PUT /v1/text_notes/{id}
  *
  * @param id Numeric note id.
- * @param eyecatchImageKey Only sent when given, so an eyecatch uploaded with
- *   uploadEyecatch is not cleared.
+ * @param eyecatchImageKey Sent as `eyecatch_image_key` only when given. An
+ *   eyecatch uploaded with uploadEyecatch is already attached to the note.
  * @param index Enable the table of contents.
  * Requires session cookies.
  */

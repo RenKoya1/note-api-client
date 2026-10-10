@@ -11,36 +11,43 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       # Setup .npmrc file to publish to npm
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v4
         with:
-          node-version: "20.x"
+          node-version: "22.x"
           registry-url: "https://registry.npmjs.org"
-      - run: npm install
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
       - run: npm run build
+
+      - name: Check whether this version is already published
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if npm view "note-api-client@$VERSION" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "note-api-client@$VERSION is already on npm; skipping publish"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
       # Publish to npm
-      - run: npm publish --access public
+      - if: steps.version.outputs.published == 'false'
+        run: npm publish --access public --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Install GitHub CLI
-        run: sudo apt install gh -y
-
-      - name: Read version and create tag
+      - name: Create tag and GitHub release
+        if: steps.version.outputs.published == 'false'
         run: |
-          VERSION=$(node -p "require('./package.json').version")
-          TAG="v$VERSION"
-
-          echo "Creating tag $TAG"
-
+          TAG="v${{ steps.version.outputs.version }}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
-          git tag $TAG
-          git push origin $TAG
-
-          echo "Creating GitHub Release for $TAG"
-          gh release create $TAG --title "$TAG" --notes "Automated release for version $TAG" --draft=false
+          git tag "$TAG"
+          git push origin "$TAG"
+          gh release create "$TAG" --title "$TAG" --generate-notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

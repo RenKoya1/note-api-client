@@ -1,0 +1,34 @@
+name: ci
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ["22.x", "24.x"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+
+  # The library supports Node 20 (engines >=20); the test runner needs 22+.
+  node20-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20.x"
+      - run: npm ci
+      - run: npm run build
+      - run: node -e "const { NoteAPIClient, NoteAPIError } = require('./dist'); new NoteAPIClient(); if (typeof NoteAPIError !== 'function') process.exit(1)"

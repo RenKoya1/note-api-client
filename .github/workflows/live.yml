@@ -1,0 +1,18 @@
+# Detects changes in note.com's API: runs the read-only live tests, which also
+# compare every response with the exported TypeScript types.
+name: live api check
+on:
+  schedule:
+    - cron: "0 0 * * 1" # every Monday 09:00 JST
+  workflow_dispatch:
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+      - run: npm ci
+      - run: npm run test:live
