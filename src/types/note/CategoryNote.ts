@@ -1,4 +1,4 @@
-import type { NoteStatus, NoteType } from "./common";
+import type { CustomDomain, NoteStatus, NoteType } from "./common";
 /**
  * Note type returned from category/hashtag search endpoints
  * GET /v1/categories/{category}
@@ -66,15 +66,15 @@ export interface CategoryNote {
     hashtag_notes: CategoryHashtagNote[];
     has_coupon: boolean;
     prior_sale: unknown | null;
-    custom_domain: string | null;
+    custom_domain: CustomDomain | null;
     editable_scopes: string[];
     non_editable_reason: string | null;
 }
 
 export interface CategoryNotePicture {
     caption: string | null;
-    url: string;
-    key: string;
+    url?: string;
+    key?: string;
     thumbnail_url?: string;
     width?: number;
     height?: number;
@@ -89,7 +89,7 @@ export interface CategoryNoteEmbeddedContent {
 export interface CategoryNoteUser {
     id: number;
     urlname: string;
-    nickname: string;
+    nickname: string | null;
     note_count: number;
     following_count: number;
     follower_count: number;
@@ -114,7 +114,7 @@ export interface CategoryNoteUser {
     follow_appeal_text: string | null;
     follow_appeal_image: string | null;
     twitter_nickname: string | null;
-    custom_domain: string | null;
+    custom_domain: CustomDomain | null;
 }
 
 export interface CategoryHashtagNote {

@@ -3,7 +3,7 @@ import { CustomDomain, NoteStatus, NoteType } from "../note/common";
 export interface MagazineUser {
   id: number;
   urlname: string;
-  nickname: string;
+  nickname: string | null;
   user_profile_image_path: string;
   profile: string | null;
   is_following: boolean;
@@ -19,7 +19,7 @@ export interface MagazineUser {
 export interface MagazineEditor {
   user_id: number;
   urlname: string;
-  nickname: string;
+  nickname: string | null;
   user_profile_image_path: string;
   profile: string | null;
   custom_domain: CustomDomain | null;
@@ -30,7 +30,7 @@ export interface MagazineDetail {
   id: number;
   key: string;
   name: string;
-  description: string;
+  description: string | null;
   price: number;
   note_count: number;
   updated_at: string;
@@ -40,7 +40,8 @@ export interface MagazineDetail {
   cover_original: string;
   cover_landscape: string;
   cover_landscape_sp: string;
-  cover_key: string;
+  /** Missing when the magazine uses the default cover. */
+  cover_key?: string;
   is_following: boolean;
   selected: boolean;
   tweet_text: string;
@@ -70,6 +71,10 @@ export interface MagazineDetail {
   custom_domain: CustomDomain | null;
   is_oneshot_subscribe_magazine: boolean;
   is_benefit_magazine: boolean;
+  /** Only present on some paid magazines. */
+  apply_status?: string;
+  is_immediate_charge?: boolean;
+  is_immediate_charge_next_month?: boolean;
   user: MagazineUser;
 }
 
@@ -91,7 +96,7 @@ export interface MagazineNote {
   pictures?: unknown[];
   user: {
     urlname: string;
-    nickname: string;
+    nickname: string | null;
     is_me: boolean;
     [key: string]: unknown;
   };
@@ -113,7 +118,7 @@ export interface SearchMagazine {
   id: number;
   key: string;
   name: string;
-  description: string;
+  description: string | null;
   price: number;
   status: string;
   yearly_price: number;
@@ -128,7 +133,7 @@ export interface SearchMagazine {
     key: string;
     name: string;
     urlname: string;
-    nickname: string;
+    nickname: string | null;
     user_profile_image_path: string;
     custom_domain: CustomDomain | null;
   };
@@ -149,7 +154,7 @@ export interface CreatorMagazine {
   id: number;
   key: string;
   name: string;
-  description: string;
+  description: string | null;
   price: number;
   yearlyPrice: number;
   status: string;
@@ -166,7 +171,7 @@ export interface CreatorMagazine {
     key: string;
     name: string;
     urlname: string;
-    nickname: string;
+    nickname: string | null;
     userProfileImagePath: string;
     customDomain: CustomDomain | null;
     blocksYou: boolean;
@@ -185,7 +190,7 @@ export interface CreatorMagazine {
   subscriptionInfo: unknown;
   hasCoupon: boolean;
   isOneshotSubscribeMagazine: boolean;
-  followerCount: number;
+  followerCount: number | null;
   noteCount: number;
   notes: unknown[];
   isImmediateCharge: boolean;

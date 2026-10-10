@@ -1,4 +1,4 @@
-import { AppealContent, NoteStatus, NoteType } from "./common";
+import { AppealContent, CustomDomain, NoteStatus, NoteType } from "./common";
 
 /**
  * Full note detail response from GET /v3/notes/{key}
@@ -11,7 +11,8 @@ export interface NoteDetail {
   key: string;
   slug: string;
   name: string;
-  body: string;
+  /** null when the reader cannot read the note (e.g. membership/magazine-only notes; see `can_read`). */
+  body: string | null;
   separator: string | null;
   description: string | null;
   index: unknown[];
@@ -41,7 +42,7 @@ export interface NoteDetail {
   category: string | null;
   classify_categories: ClassifyCategory[];
   comment_viewable: boolean;
-  custom_domain: string | null;
+  custom_domain: CustomDomain | null;
   embedded_contents: EmbeddedContent[];
   eyecatch: string | null;
   eyecatch_alt: string | null;
@@ -108,7 +109,8 @@ export interface NoteDetail {
   line_add_friend: unknown | null;
   line_add_friend_note_enable_feature: boolean;
   note_share_total_count: number;
-  note_share_provider_details: NoteShareProviderDetails;
+  /** Only providers the note was shared on are present. */
+  note_share_provider_details: Partial<NoteShareProviderDetails>;
   is_published_preview_note: boolean;
   is_ratable: boolean;
   content_rating_via: string;
@@ -122,8 +124,28 @@ export interface NoteDetail {
   exclude_ai_learning_reward: boolean;
   is_related_with_investment: boolean;
   related_stocks: unknown[];
+  /** Present when the eyecatch is a stock photo from another creator. */
+  stock_photo?: {
+    stock_photo_user: { id: number; urlname: string; custom_domain: CustomDomain | null };
+    stock_photo_image: { id: number };
+    original_note: { key: string };
+    is_public_domain_image: boolean;
+  } | null;
+  /** Magazine(s) that grant access to a limited note. */
+  limited_note_include_magazine?: LimitedNoteMagazine | null;
+  limited_note_include_magazines?: LimitedNoteMagazine[];
   translation?: unknown;
   translation_setting?: unknown;
+}
+
+export interface LimitedNoteMagazine {
+  id: number;
+  key: string;
+  name: string;
+  description: string | null;
+  price: number;
+  note_count: number;
+  [key: string]: unknown;
 }
 
 export interface NoteCapabilities {
@@ -140,7 +162,7 @@ export interface NoteDetailUser {
   id: number;
   key: string;
   urlname: string;
-  nickname: string;
+  nickname: string | null;
   active_flag: boolean;
   note_count: number;
   email_confirmed_flag: boolean;
@@ -156,7 +178,7 @@ export interface NoteDetailUser {
   is_following: boolean;
   is_followed: boolean;
   is_admin: boolean;
-  custom_domain: string | null;
+  custom_domain: CustomDomain | null;
   enable_serif: boolean;
   others_related_notes_enabled: boolean;
   is_creator_popular_sort_enabled: boolean;
@@ -184,7 +206,7 @@ export interface NoteDetailUser {
   blocks_you: boolean;
   is_blocked: boolean;
   disable_guest_purchase: boolean;
-  support_box_appeal_text: string | null;
+  support_box_appeal_text?: string | null;
   custom_support_box: unknown | null;
 }
 
@@ -238,6 +260,7 @@ export interface NoteShareProviderDetails {
   note: ShareProviderDetail;
   others: ShareProviderDetail;
   twitter: ShareProviderDetail;
+  instagram_stories: ShareProviderDetail;
 }
 
 export interface ShareProviderDetail {

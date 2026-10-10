@@ -3,7 +3,7 @@ export type UserSimple = {
   key: string;
   name: string;
   urlname: string;
-  nickname: string;
+  nickname: string | null;
   user_profile_image_path: string;
   custom_domain: {
     id?: number;

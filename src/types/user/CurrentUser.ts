@@ -8,7 +8,7 @@ import { CustomDomain } from "../note/common";
 export interface CurrentUser {
   id: number;
   key: string;
-  nickname: string;
+  nickname: string | null;
   urlname: string;
   note_count: number;
   following_count: number;

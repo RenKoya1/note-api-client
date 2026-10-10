@@ -1,5 +1,5 @@
 import type { DiscountCampaign } from "./NoteDetail";
-import { AppealContent, NoteStatus, NoteType } from "./common";
+import { AppealContent, CustomDomain, NoteStatus, NoteType } from "./common";
 
 /**
  * Note type returned from username search endpoint
@@ -22,7 +22,7 @@ export interface UserNote {
     canRead: boolean;
     isAuthor: boolean;
     externalUrl: string | null;
-    customDomain: string | null;
+    customDomain: CustomDomain | null;
     body: string;
     separator: string | null;
     isLimited: boolean;
@@ -42,7 +42,8 @@ export interface UserNote {
     lineShareUrl: string;
     audio: Record<string, unknown>;
     pictures: unknown[];
-    limitedMessage: string | null;
+    /** Set for notes only readable by buyers of a magazine/membership. */
+    limitedMessage: UserNoteLimitedMessage | string | null;
     labels: unknown[];
     priorSale: unknown | null;
     canMultipleLimitedNote: boolean;
@@ -68,14 +69,26 @@ export interface UserNote {
     priceInfo: PriceInfo;
 }
 
+export interface UserNoteLimitedMessage {
+    userName: string;
+    prefix: string;
+    suffix: string;
+    magazines: {
+        name: string;
+        key: string;
+        user: { urlname: string; customDomain: CustomDomain | null };
+        customDomain: CustomDomain | null;
+    }[];
+}
+
 export interface UserNoteUser {
     id: number;
     key: string;
     name: string;
     urlname: string;
-    nickname: string;
+    nickname: string | null;
     userProfileImagePath: string;
-    customDomain: string | null;
+    customDomain: CustomDomain | null;
     disableSupport: boolean;
     disableGuestPurchase: boolean;
     emailConfirmedFlag: boolean;

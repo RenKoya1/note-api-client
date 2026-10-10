@@ -1,9 +1,10 @@
+import type { CustomDomain } from "../note/common";
 export type User = {
   id: number;
   key: string;
-  nickname: string;
+  nickname: string | null;
   urlname: string;
-  profile: string;
+  profile: string | null;
   noteCount: number;
   magazineCount: number;
   followingCount: number;
@@ -11,11 +12,11 @@ export type User = {
   isFollowing: boolean;
   isFollowed: boolean;
   isMyself: boolean;
-  originalHeaderImageUrl: string;
-  headerImageUrl: string;
-  headerImageKey: string;
+  originalHeaderImageUrl: string | null;
+  headerImageUrl: string | null;
+  headerImageKey: string | null;
   profileImageUrl: string;
-  profileImageKey: string;
+  profileImageKey: string | null;
   isBlocked: boolean;
   blocksYou: boolean;
   isAdmin: boolean;
@@ -33,9 +34,9 @@ export type User = {
   disableSupport: boolean;
   hasStore: boolean;
   hasCircle: boolean;
-  customDomain: string | null;
-  followAppealText: string;
-  followAppealImage: string;
+  customDomain: CustomDomain | null;
+  followAppealText: string | null;
+  followAppealImage: string | null;
   isCreatorLikesTabEnabled: boolean;
   isCreatorMagazinesTabEnabled: boolean;
   isCreatorCirclesTabEnabled: boolean;

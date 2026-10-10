@@ -1,3 +1,4 @@
+import type { CustomDomain } from "./common";
 import type { NoteStatus, NoteType } from "./common";
 import { Price } from "../Price";
 import type { DiscountCampaign } from "./NoteDetail";
@@ -19,7 +20,7 @@ export type Note = {
   can_read: boolean;
   is_author: boolean;
   external_url: string | null;
-  custom_domain: string | null;
+  custom_domain: CustomDomain | null;
   body: string;
   separator: string | null;
   is_limited: boolean;

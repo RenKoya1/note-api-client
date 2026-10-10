@@ -33,7 +33,7 @@ export interface Contest {
       id: number;
       name: string;
       urlname: string;
-      nickname: string;
+      nickname: string | null;
       userProfileImagePath: string;
       customDomain: CustomDomain | null;
       [key: string]: unknown;

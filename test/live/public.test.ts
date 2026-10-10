@@ -83,7 +83,7 @@ describe("notes", () => {
     assertContract(t, note, "NoteDetail");
     assert.equal(note.id, NOTE_ID);
     assert.equal(note.key, NOTE_KEY);
-    assert.ok(note.body.length > 0);
+    assert.ok(note.body && note.body.length > 0, "public note body must be readable");
   });
 
   test("getComments", async (t) => {

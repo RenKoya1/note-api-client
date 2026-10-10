@@ -37,7 +37,7 @@ for (const note of res.notes.contents) {
 }
 
 const detail = await client.getNoteDetail({ key: "n1a0b26f944f4" });
-console.log(detail.body);
+console.log(detail.body); // null when you cannot read it (membership / magazine-only notes)
 ```
 
 ## Client options
@@ -259,8 +259,12 @@ npm run build
 ```
 
 `test:live` also checks every response against the exported TypeScript types and reports
-fields note.com added. Logged-in tests run when `NOTE_COOKIE` is set (they create a draft and
-delete it again); `NOTE_LIVE_PUBLISH=1` additionally publishes a test note and deletes it.
+fields note.com added. Optional live suites:
+
+- `NOTE_LIVE_SWEEP=1` – wide sweep (~150 requests) over many keywords, categories, notes and
+  creators to catch nullable fields that fixed fixtures miss. Runs weekly in CI.
+- `NOTE_COOKIE="_note_session_v5=..."` – logged-in tests (create a draft and delete it again).
+- `NOTE_LIVE_PUBLISH=1` (with `NOTE_COOKIE`) – also publishes a test note and deletes it.
 
 ## License
 

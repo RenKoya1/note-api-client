@@ -11,7 +11,7 @@ export interface MkitNote {
   user: {
     id: number;
     key: string;
-    nickname: string;
+    nickname: string | null;
     urlname: string;
     custom_domain: CustomDomain | null;
     user_profile_image_path: string;

@@ -5,9 +5,9 @@ export interface FollowUser {
   id: number;
   key: string;
   name: string;
-  nickname: string;
+  nickname: string | null;
   urlname: string;
-  profile: string;
+  profile: string | null;
   user_profile_image_path: string;
   withdrawal: boolean;
   is_following: boolean;

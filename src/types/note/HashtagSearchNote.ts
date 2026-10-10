@@ -36,7 +36,7 @@ export interface HashtagSearchNoteUser {
     key: string;
     name: string;
     urlname: string;
-    nickname: string;
+    nickname: string | null;
     user_profile_image_url: string;
     custom_domain: CustomDomain | null;
 }

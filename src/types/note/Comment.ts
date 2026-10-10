@@ -21,7 +21,7 @@ export interface Comment {
 
 export interface CommentUser {
     id: number;
-    nickname: string;
+    nickname: string | null;
     urlname: string;
     user_profile_image_path: string;
     comment_like_appeal_text: string | null;

@@ -4,9 +4,9 @@ import { CustomDomain } from "../note/common";
 export interface SearchUser {
   id: number;
   urlname: string;
-  profile: string;
+  profile: string | null;
   key: string;
-  nickname: string;
+  nickname: string | null;
   following_count: number;
   follower_count: number;
   is_following: boolean;

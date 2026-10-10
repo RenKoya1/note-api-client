@@ -1,3 +1,3 @@
-
-npm login                           
-npm publish --access=public   
+version up
+npm login  
+npm publish --access=public
