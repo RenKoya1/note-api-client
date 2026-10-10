@@ -71,10 +71,23 @@ export function checkContract(value: unknown, typeName: string, maxItems = 100):
   const { checker, exports } = load();
   const root = exports.get(typeName);
   if (!root) throw new Error(`type ${typeName} is not exported from src/index.ts`);
-  const errors = new Set<string>();
-  const extra = new Set<string>();
+  const run = (type: ts.Type, v: unknown, at: string, depth: number) => {
+    const errors = new Set<string>();
+    const extra = new Set<string>();
+    walkInto(type, v, at, depth, errors, extra);
+    return { errors, extra };
+  };
 
-  const walk = (type: ts.Type, v: unknown, at: string, depth: number) => {
+  const walkInto = (
+    type: ts.Type,
+    v: unknown,
+    at: string,
+    depth: number,
+    errors: Set<string>,
+    extra: Set<string>,
+  ) => {
+    const walk = (t: ts.Type, value: unknown, path: string, d: number) =>
+      walkInto(t, value, path, d, errors, extra);
     if (depth > 8) return;
     const kinds = kindsOf(checker, type);
     if (kinds.includes("any")) return;
@@ -84,6 +97,19 @@ export function checkContract(value: unknown, typeName: string, maxItems = 100):
       return;
     }
     const parts = type.isUnion() ? type.types : [type];
+    if (actual === "string") {
+      // Closed string literal unions ("root" | "element") must match exactly;
+      // open ones (`"a" | (string & {})`, plain string) accept anything.
+      const stringParts = parts.filter((p) => kindsOf(checker, p)[0] === "string");
+      const literals = stringParts.filter((p): p is ts.StringLiteralType => p.isStringLiteral());
+      if (literals.length > 0 && literals.length === stringParts.length) {
+        const allowed = literals.map((l) => l.value);
+        if (!allowed.includes(v as string)) {
+          errors.add(`${at}: expected ${allowed.map((a) => JSON.stringify(a)).join(" | ")}, got ${JSON.stringify(v)}`);
+        }
+      }
+      return;
+    }
     if (actual === "array") {
       const arrayType = parts.find((p) => checker.isArrayType(p));
       if (!arrayType) return;
@@ -92,10 +118,20 @@ export function checkContract(value: unknown, typeName: string, maxItems = 100):
       return;
     }
     if (actual !== "object") return;
-    const objectType = parts.find(
+    const objectTypes = parts.filter(
       (p) => kindsOf(checker, p)[0] === "object" && !checker.isArrayType(p),
     );
-    if (!objectType) return;
+    if (objectTypes.length === 0) return;
+    if (objectTypes.length > 1) {
+      // Union of object types (e.g. a discriminated union): use the member
+      // that matches best.
+      const results = objectTypes.map((member) => run(member, v, at, depth));
+      const best = results.reduce((a, b) => (b.errors.size < a.errors.size ? b : a));
+      best.errors.forEach((e) => errors.add(e));
+      best.extra.forEach((e) => extra.add(e));
+      return;
+    }
+    const objectType = objectTypes[0]!;
     const props = checker.getPropertiesOfType(objectType);
     const hasIndex = checker.getIndexInfosOfType(objectType).length > 0;
     if (props.length === 0) return; // Record<string, ...> or {}
@@ -116,6 +152,6 @@ export function checkContract(value: unknown, typeName: string, maxItems = 100):
     }
   };
 
-  walk(root, value, typeName, 0);
+  const { errors, extra } = run(root, value, typeName, 0);
   return { errors: [...errors], extra: [...extra] };
 }

@@ -151,6 +151,11 @@ describe("responses", () => {
     });
   });
 
+  test("requestBody returns the whole body", async () => {
+    const { client } = mockClient(() => ({ body: { data: [1], next_page: 2 } }));
+    assert.deepEqual(await client.requestBody("GET", "https://note.com/api/x"), { data: [1], next_page: 2 });
+  });
+
   test("2xx without a data field throws", async () => {
     const { client } = mockClient(() => ({ body: "<html>ok</html>" }));
     await assert.rejects(client.get("https://note.com/api/x"), /unexpected response/);
@@ -177,6 +182,46 @@ describe("responses", () => {
     const { client } = mockClient(() => ({ body: { data: { csrf_token: "abc" } } }));
     await client.post("https://note.com/api/v1/sessions/sign_in", {});
     assert.equal(client.csrfToken, "abc");
+  });
+});
+
+describe("retries", () => {
+  // Retry-After: 0 keeps the tests fast.
+  const transient = (status: number) => ({ status, body: { error: "busy" }, headers: { "retry-after": "0" } });
+
+  test("GET is retried on 429/502/503/504", async () => {
+    for (const status of [429, 502, 503, 504]) {
+      let calls = 0;
+      const { client } = mockClient(() => (calls++ < 2 ? transient(status) : { body: { data: "ok" } }));
+      assert.equal(await client.get("https://note.com/api/x"), "ok", String(status));
+      assert.equal(calls, 3);
+    }
+  });
+
+  test("gives up after `retries` and reports the last error", async () => {
+    let calls = 0;
+    const { client } = mockClient(() => (calls++, transient(503)), { retries: 1 });
+    await assert.rejects(client.get("https://note.com/api/x"), (e: any) => e.status === 503);
+    assert.equal(calls, 2);
+  });
+
+  test("non-transient errors and non-GET requests are not retried", async () => {
+    let calls = 0;
+    const { client } = mockClient(() => (calls++, { status: 404, body: { error: "x" } }));
+    await assert.rejects(client.get("https://note.com/api/x"));
+    assert.equal(calls, 1);
+
+    calls = 0;
+    const post = mockClient(() => (calls++, transient(503)));
+    await assert.rejects(post.client.post("https://note.com/api/x", {}));
+    assert.equal(calls, 1, "POST must not be retried");
+  });
+
+  test("retries: 0 disables retrying", async () => {
+    let calls = 0;
+    const { client } = mockClient(() => (calls++, transient(504)), { retries: 0 });
+    await assert.rejects(client.get("https://note.com/api/x"));
+    assert.equal(calls, 1);
   });
 });
 

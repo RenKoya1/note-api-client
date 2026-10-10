@@ -71,6 +71,9 @@ test("contract sweep over varied live data", { skip, timeout: 30 * 60_000 }, asy
     await check(`likes ${note.key}`, "NoteLikesResponse", () => client.getNoteLikes({ key: note.key }));
     if (note.comment_count > 0) {
       await check(`comments ${note.id}`, "CommentsResponse", () => client.getComments({ id: note.id }));
+      await check(`note comments ${note.key}`, "NoteCommentsResponse", () =>
+        client.getNoteComments({ key: note.key, perPage: 50 }),
+      );
     }
   }
 

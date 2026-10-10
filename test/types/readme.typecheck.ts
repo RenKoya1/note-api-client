@@ -1,7 +1,7 @@
 /** README examples, kept here so they are type-checked. Never executed. */
 import fs from "node:fs";
 import { randomUUID as uuid } from "node:crypto";
-import { NoteAPIClient, NoteAPIError } from "../../src";
+import { NoteAPIClient, NoteAPIError, noteCommentToText } from "../../src";
 
 export async function readmeExamples() {
   const client = new NoteAPIClient();
@@ -13,7 +13,7 @@ export async function readmeExamples() {
   const detail = await client.getNoteDetail({ key: "n1a0b26f944f4" });
   console.log(detail.body);
 
-  new NoteAPIClient({ cookies: "_note_session_v5=...", proxyUrl: "http://user:pass@proxy:8080", timeout: 14000, userAgent: "..." });
+  new NoteAPIClient({ cookies: "_note_session_v5=...", proxyUrl: "http://user:pass@proxy:8080", timeout: 14000, retries: 2, userAgent: "..." });
   new NoteAPIClient("_note_session_v5=...", "http://proxy:8080");
 
   const page1 = await client.searchNotesByKeyword({ keyword: "AI", size: 20 });
@@ -24,6 +24,30 @@ export async function readmeExamples() {
     await client.searchNotesByCategory({ category: "tech", order: "new", page: tech.next_page ?? 2 });
   }
   await client.searchNotesByHashtag({ hashtag: "#AI", order: "new", paid_only: true });
+
+  const note = await client.getNoteDetail({ key: "n7070cd22a1e3" });
+  if (note.capabilities.note_comment) {
+    let page: number | null = 1;
+    while (page) {
+      const res = await client.getNoteComments({ key: note.key, page, perPage: 50 });
+      for (const c of res.comments) {
+        console.log(c.user.nickname, noteCommentToText(c.comment));
+        if (c.reply_count > 0) {
+          const replies = await client.getNoteComments({ key: note.key, parentKey: c.key, order: "oldest" });
+          console.log(replies.comments.length, "replies");
+        }
+      }
+      page = res.next_page;
+    }
+  } else {
+    let maxId: number | undefined;
+    for (;;) {
+      const res = await client.getComments({ id: note.id, maxId });
+      res.comments.forEach((c) => console.log(c.user.nickname, c.comment));
+      if (res.rest_comment_count === 0 || res.comments.length === 0) break;
+      maxId = Math.min(...res.comments.map((c) => c.id));
+    }
+  }
 
   const user = await client.searchUserByUsername({ username: "info" });
   const followers = await client.getFollowers({ key: user.key, page: 1 });

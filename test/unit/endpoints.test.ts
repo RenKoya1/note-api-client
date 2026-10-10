@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { NoteAPIError } from "../../src";
+import { NoteAPIError, noteCommentToText } from "../../src";
 import { apiPath, mockClient } from "../helpers/mock";
 
 const ok = (data: unknown = {}) => () => ({ body: { data } });
@@ -60,10 +60,49 @@ describe("notes", () => {
     await assert.rejects(client.getNoteDetail({ key: "" }), TypeError);
   });
 
-  test("getComments uses the numeric id", async () => {
+  test("getComments uses the numeric id and pages with max_id", async () => {
     const { client, requests } = mockClient(ok({ comments: [] }));
     await client.getComments({ id: 88943926 });
+    await client.getComments({ id: 88943926, maxId: 24676232 });
     assert.equal(apiPath(requests[0]), "/v1/note/88943926/comments");
+    assert.deepEqual(requests[0].params, {});
+    assert.deepEqual(requests[1].params, { max_id: 24676232 });
+  });
+
+  test("getNoteComments keeps the top-level paging fields", async () => {
+    const comment = { key: "c1", comment: { type: "root", children: [] } };
+    const { client, requests } = mockClient(() => ({
+      body: { data: [comment], current_page: 2, next_page: 3, total_count: 57 },
+    }));
+    const res = await client.getNoteComments({ key: "nabc", page: 2, perPage: 5, order: "oldest" });
+    assert.equal(apiPath(requests[0]), "/v3/notes/nabc/note_comments");
+    assert.deepEqual(requests[0].params, { page: 2, per_page: 5, order: "oldest" });
+    assert.deepEqual(res, { comments: [comment], current_page: 2, next_page: 3, total_count: 57 });
+
+    await client.getNoteComments({ key: "nabc", parentKey: "c1" });
+    assert.deepEqual(requests[1].params, { page: 1, per_page: 10, order: "newest", parent_key: "c1" });
+    await assert.rejects(client.getNoteComments({ key: "nabc", perPage: 0 }), RangeError);
+  });
+
+  test("noteCommentToText flattens the rich text tree", () => {
+    assert.equal(
+      noteCommentToText({
+        type: "root",
+        children: [
+          { type: "element", tag_name: "p", children: [{ type: "text", value: "こんにちは" }] },
+          {
+            type: "element",
+            tag_name: "p",
+            children: [
+              { type: "text", value: "a" },
+              { type: "element", tag_name: "br", children: [] },
+              { type: "text", value: "b" },
+            ],
+          },
+        ],
+      }),
+      "こんにちは\na\nb",
+    );
   });
 
   test("getNoteLikes paginates", async () => {
@@ -220,6 +259,20 @@ describe("write operations", () => {
     assert.equal(requests[1].json.body, "<p>hello</p>");
     assert.equal(created.body, "<p>hello</p>");
     assert.equal(created.key, "nkey");
+  });
+
+  test("createNote names the created note when saving the body fails", async () => {
+    const { client } = mockClient((req) =>
+      apiPath(req) === "/v1/text_notes"
+        ? { status: 201, body: { data: { id: 123, key: "nkey", body: null } } }
+        : { status: 500, body: { error: "boom" } },
+    );
+    await assert.rejects(client.createNote({ title: "T", body: "<p>x</p>" }), (e: any) => {
+      assert.ok(e instanceof NoteAPIError);
+      assert.match(e.message, /note 123 \(nkey\) was created/);
+      assert.equal(e.status, 500);
+      return true;
+    });
   });
 
   test("createNote with empty body makes one request", async () => {

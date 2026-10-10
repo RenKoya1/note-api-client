@@ -1,5 +1,5 @@
 /**
- * Comment response from GET /v1/note/{id}/comments
+ * Comment response from GET /v1/note/{id}/comments (legacy comment system)
  */
 export interface CommentsResponse {
     comments: Comment[];

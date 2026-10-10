@@ -7,6 +7,7 @@ export type { MagazineSearchResponse } from "./magazine/searchMagazinesByKeyword
 export type { HashtagKeywordSearchResponse } from "./hashtag/searchHashtagsByKeyword";
 export type { SearchParams } from "./search/search";
 export type { CreatedNote } from "./note/createNote";
+export { noteCommentToText } from "./note/getNoteComments";
 export type { SaveDraftResponse } from "./note/saveDraft";
 export { MAX_FOLLOWS_PER_PAGE } from "./user/follows";
 
@@ -18,6 +19,7 @@ export * from "./types/note/Note";
 export * from "./types/note/NoteDetail";
 export * from "./types/note/Notes";
 export * from "./types/note/Comment";
+export * from "./types/note/NoteComment";
 export * from "./types/note/Like";
 export * from "./types/note/CategoryNote";
 export * from "./types/note/HashtagSearchNote";

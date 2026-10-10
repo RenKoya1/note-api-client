@@ -10,6 +10,7 @@ import { searchUsersByKeyword } from "../user/searchUsersByKeyword";
 import { getFollowings } from "../user/getFollowings";
 import { getFollowers } from "../user/getFollowers";
 import { getComments } from "../note/getComments";
+import { getNoteComments } from "../note/getNoteComments";
 import { getNoteLikes } from "../note/getNoteLikes";
 import { searchMagazinesByKeyword } from "../magazine/searchMagazinesByKeyword";
 import { searchMagazinesByUsername } from "../magazine/searchMagazinesByUsername";
@@ -53,6 +54,12 @@ export interface NoteAPIClientOptions {
   timeout?: number | undefined;
   /** User-Agent header sent with every request. */
   userAgent?: string | undefined;
+  /**
+   * How often a GET request is retried after a transient failure
+   * (network error, timeout, 429, 502, 503, 504). Defaults to 2; 0 disables.
+   * Other methods are never retried.
+   */
+  retries?: number | undefined;
 }
 
 type Params = Record<string, unknown>;
@@ -87,6 +94,24 @@ function sanitizeProxyUrl(proxyUrl?: string): string | undefined {
   return proxyUrl;
 }
 
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+const TRANSIENT_STATUSES = new Set([429, 502, 503, 504]);
+
+function isTransient(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false;
+  if (!error.response) return true; // network error or timeout
+  return TRANSIENT_STATUSES.has(error.response.status);
+}
+
+// Exponential backoff (0.5s, 1s, 2s, ...), honoring Retry-After up to 10s.
+function retryDelay(error: unknown, attempt: number): number {
+  const header = axios.isAxiosError(error) ? error.response?.headers["retry-after"] : undefined;
+  const seconds = Number(header);
+  if (Number.isFinite(seconds) && seconds >= 0) return Math.min(seconds, 10) * 1000;
+  return 500 * 2 ** (attempt - 1);
+}
+
 // Drop undefined values so they are not serialized as "undefined".
 function compactParams(params?: Params): Params | undefined {
   if (!params) return undefined;
@@ -100,6 +125,9 @@ function compactParams(params?: Params): Params | undefined {
 export class NoteAPIClient {
   private client: AxiosInstance;
   private userAgent: string;
+  private retries: number;
+  /** Request timeout in milliseconds. */
+  public readonly timeout: number;
 
   public BASE_URL = "https://note.com/api";
   public cookies: string | null = null;
@@ -118,12 +146,14 @@ export class NoteAPIClient {
       this.cookies = options.cookies;
     }
     this.userAgent = options.userAgent ?? DEFAULT_USER_AGENT;
+    this.retries = Math.max(0, Math.floor(options.retries ?? 2));
+    this.timeout = options.timeout ?? 14000;
     // note.com issues a write-capable session only for residential JP IPs.
     // When a proxy URL is supplied, route every request through it so
     // sign-in and writes share the same egress IP.
     const validProxyUrl = sanitizeProxyUrl(options.proxyUrl);
     this.client = axios.create({
-      timeout: options.timeout ?? 14000,
+      timeout: this.timeout,
       ...(validProxyUrl
         ? {
             httpsAgent: new HttpsProxyAgent(validProxyUrl),
@@ -168,7 +198,33 @@ export class NoteAPIClient {
    * Throws NoteAPIError for HTTP errors and for 2xx responses carrying an
    * `error` body.
    */
+  private async withRetry<R>(method: string, send: () => Promise<R>): Promise<R> {
+    const maxAttempts = method === "GET" ? this.retries + 1 : 1;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        return await send();
+      } catch (error) {
+        if (attempt >= maxAttempts || !isTransient(error)) throw error;
+        await sleep(retryDelay(error, attempt));
+      }
+    }
+  }
+
   public async request<T = unknown>(
+    method: Method,
+    url: string,
+    options: { params?: Params | undefined; data?: unknown } = {},
+  ): Promise<T> {
+    const body = await this.requestBody<{ data: T }>(method, url, options);
+    return body.data;
+  }
+
+  /**
+   * Like `request`, but returns the whole JSON body instead of its `data`
+   * field. Some endpoints put pagination info next to `data`
+   * (e.g. `{ data: [...], next_page: 2, total_count: 57 }`).
+   */
+  public async requestBody<T extends { data: unknown } = { data: unknown }>(
     method: Method,
     url: string,
     options: { params?: Params | undefined; data?: unknown } = {},
@@ -180,13 +236,15 @@ export class NoteAPIClient {
 
     let response;
     try {
-      response = await this.client.request({
-        method,
-        url,
-        params,
-        data,
-        headers: this.buildHeaders(hasJsonBody),
-      });
+      response = await this.withRetry(upperMethod, () =>
+        this.client.request({
+          method,
+          url,
+          params,
+          data,
+          headers: this.buildHeaders(hasJsonBody),
+        }),
+      );
     } catch (error) {
       if (!axios.isAxiosError(error)) throw error;
       const res = error.response;
@@ -236,7 +294,7 @@ export class NoteAPIClient {
     }
     // The payload shape is described by T; it is checked against the live
     // API by the contract tests (npm run test:live).
-    return body.data as T;
+    return body as T;
   }
 
   public get<T = unknown>(url: string, params?: Params): Promise<T> {
@@ -262,6 +320,7 @@ export class NoteAPIClient {
   public searchNotesByHashtag = searchNotesByHashtag;
   public getNoteDetail = getNoteDetail;
   public getComments = getComments;
+  public getNoteComments = getNoteComments;
   public getNoteLikes = getNoteLikes;
   public createNote = createNote;
   public saveDraft = saveDraft;

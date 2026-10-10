@@ -17,8 +17,8 @@ async function toBytes(image: ImageInput): Promise<Uint8Array<ArrayBuffer>> {
   return new Uint8Array(await image.arrayBuffer());
 }
 
-async function download(imageUrl: string): Promise<Uint8Array<ArrayBuffer>> {
-  const res = await fetch(imageUrl);
+async function download(imageUrl: string, timeout: number): Promise<Uint8Array<ArrayBuffer>> {
+  const res = await fetch(imageUrl, { signal: AbortSignal.timeout(timeout) });
   if (!res.ok) {
     throw new Error(
       `note-api-client: failed to download eyecatch image (${res.status} ${res.statusText}): ${imageUrl}`,
@@ -55,7 +55,7 @@ export async function uploadEyecatch(
   if (!imageUrl && !image) {
     throw new TypeError('note-api-client: "imageUrl" or "image" is required');
   }
-  const bytes = image ? await toBytes(image) : await download(imageUrl!);
+  const bytes = image ? await toBytes(image) : await download(imageUrl!, this.timeout);
 
   const { width, height, type } = imageSize(bytes);
   const contentType = type ? MIME_TYPES[type] : undefined;

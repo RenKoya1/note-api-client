@@ -50,6 +50,16 @@ export async function typeChecks(client: NoteAPIClient) {
   expectType<Equal<AnyReturning, never>>(true);
   expectType<Equal<Awaited<ReturnType<typeof client.get>>, unknown>>(true);
 
+  const comments = await client.getNoteComments({ key: "n", order: "oldest" });
+  for (const c of comments.comments) {
+    if (c.comment.type === "text") {
+      const text: string = c.comment.value;
+      void text;
+    }
+  }
+  // @ts-expect-error unsupported comment order
+  await client.getNoteComments({ key: "n", order: "popular" });
+
   // Parameters are checked.
   // @ts-expect-error keyword is required
   await client.searchNotesByKeyword({});

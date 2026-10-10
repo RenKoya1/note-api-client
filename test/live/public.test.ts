@@ -5,7 +5,7 @@
  */
 import { test, describe, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { NoteAPIError } from "../../src";
+import { NoteAPIError, noteCommentToText } from "../../src";
 import { assertContract, liveClient, pause } from "../helpers/live";
 
 // Stable fixtures: note.com official account and long-lived public content.
@@ -14,6 +14,9 @@ const NOTE_ID = 88943926;
 const OFFICIAL = "info";
 const SMALL_CREATOR = "notepecora";
 const MAGAZINE_KEY = "m891c62a08b36";
+// Comment systems: legacy (/v1/note/{id}/comments) vs current (/v3/notes/{key}/note_comments).
+const LEGACY_COMMENTS_NOTE_KEY = "n07c64c81cd47"; // 70 comments
+const NEW_COMMENTS_NOTE_KEY = "n7070cd22a1e3";
 
 const client = liveClient();
 afterEach(() => pause());
@@ -86,10 +89,67 @@ describe("notes", () => {
     assert.ok(note.body && note.body.length > 0, "public note body must be readable");
   });
 
-  test("getComments", async (t) => {
+  test("getComments (legacy system): pages past 50 with maxId", async (t) => {
     const res = await client.getComments({ id: NOTE_ID });
     assertContract(t, res, "CommentsResponse");
     assert.ok(res.comments.length > 0);
+
+    // A legacy note with more than 50 comments.
+    const detail = await client.getNoteDetail({ key: LEGACY_COMMENTS_NOTE_KEY });
+    assert.equal(detail.capabilities.note_comment, false);
+    const seen = new Set<number>();
+    let maxId: number | undefined;
+    for (let i = 0; i < 10; i++) {
+      await pause();
+      const page = await client.getComments({ id: detail.id, maxId });
+      assertContract(t, page, "CommentsResponse");
+      page.comments.forEach((c) => seen.add(c.id));
+      if (page.rest_comment_count === 0 || page.comments.length === 0) break;
+      maxId = Math.min(...page.comments.map((c) => c.id));
+    }
+    assert.ok(seen.size > 50, `collected ${seen.size} comments`);
+    assert.ok(Math.abs(seen.size - detail.comment_count) <= 5, `${seen.size} vs comment_count ${detail.comment_count}`);
+  });
+
+  test("getNoteComments (current system): paging, order, replies", async (t) => {
+    const detail = await client.getNoteDetail({ key: NEW_COMMENTS_NOTE_KEY });
+    assert.equal(detail.capabilities.note_comment, true);
+    await pause();
+    assert.equal((await client.getComments({ id: detail.id })).comments.length, 0, "legacy API is empty for these notes");
+
+    await pause();
+    const p1 = await client.getNoteComments({ key: NEW_COMMENTS_NOTE_KEY, perPage: 5 });
+    assertContract(t, p1, "NoteCommentsResponse");
+    assert.equal(p1.comments.length, 5);
+    assert.equal(p1.current_page, 1);
+    assert.equal(p1.next_page, 2);
+    assert.ok(p1.total_count > 5);
+    assert.ok(p1.comments.every((c) => c.is_root && c.note_key === NEW_COMMENTS_NOTE_KEY));
+    assert.ok(p1.comments.every((c) => noteCommentToText(c.comment).length > 0));
+    assert.ok(isDescending(p1.comments.map((c) => c.created_at)), "newest first");
+
+    await pause();
+    const p2 = await client.getNoteComments({ key: NEW_COMMENTS_NOTE_KEY, perPage: 5, page: 2 });
+    assert.ok(p2.comments.every((c) => !p1.comments.some((x) => x.key === c.key)));
+
+    await pause();
+    const all = await client.getNoteComments({ key: NEW_COMMENTS_NOTE_KEY, perPage: 100, order: "oldest" });
+    assertContract(t, all, "NoteCommentsResponse");
+    assert.equal(all.comments.length, all.total_count);
+    assert.ok(!isDescending(all.comments.map((c) => c.created_at)) || all.comments.length < 2, "oldest first");
+
+    const withReplies = all.comments.find((c) => c.reply_count > 0);
+    if (withReplies) {
+      await pause();
+      const replies = await client.getNoteComments({
+        key: NEW_COMMENTS_NOTE_KEY,
+        parentKey: withReplies.key,
+        order: "oldest",
+      });
+      assertContract(t, replies, "NoteCommentsResponse");
+      assert.equal(replies.total_count, withReplies.reply_count);
+      assert.ok(replies.comments.every((c) => !c.is_root));
+    }
   });
 
   test("getNoteLikes: 50 per page, empty past the end", async (t) => {

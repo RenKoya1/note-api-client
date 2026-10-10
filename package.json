@@ -1,10 +1,17 @@
 {
   "name": "note-api-client",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A comprehensive Node.js and TypeScript client library for note.com API - Search notes, manage content, handle authentication, and automate your note.com workflow with full TypeScript support",
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "homepage": "https://github.com/RenKoya1/note-api-client",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RenKoya1/note-api-client.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RenKoya1/note-api-client/issues"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -35,7 +42,7 @@
     "library",
     "client"
   ],
-  "author": "",
+  "author": "Ren Koya",
   "type": "commonjs",
   "dependencies": {
     "axios": "^1.20.0",

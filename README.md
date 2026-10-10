@@ -47,6 +47,7 @@ const client = new NoteAPIClient({
   cookies: "_note_session_v5=...", // logged-in session (required for write operations)
   proxyUrl: "http://user:pass@proxy:8080", // optional; invalid URLs are ignored with a warning
   timeout: 14000, // ms
+  retries: 2, // GET retries on network errors / timeouts / 429 / 502 / 503 / 504 (0 disables)
   userAgent: "...", // optional
 });
 
@@ -84,7 +85,8 @@ const page2 = await client.searchNotesByKeyword({
 | Method | Params | Returns |
 | --- | --- | --- |
 | `getNoteDetail` | `key` (e.g. `"n1a0b26f944f4"`) | `NoteDetail` |
-| `getComments` | `id` (numeric `NoteDetail.id`) | `CommentsResponse` |
+| `getNoteComments` | `key`, `page?`, `perPage?` (default 10), `order?: "newest" \| "oldest"`, `parentKey?` (replies) | `NoteCommentsResponse` |
+| `getComments` | `id` (numeric `NoteDetail.id`), `maxId?` | `CommentsResponse` (legacy system) |
 | `getNoteLikes` | `key`, `page?` (50 per page) | `NoteLikesResponse` |
 | `searchNotesByUsername` | `username` (urlname), `page?` | `UserNotesResponse` |
 | `searchNotesByCategory` | `category` (slug, e.g. `"tech"`), `order?: "popular" \| "new" \| "hot"`, `page?` | `CategorySearchResponse` |
@@ -100,6 +102,42 @@ const paid = await client.searchNotesByHashtag({ hashtag: "#AI", order: "new", p
 ```
 
 Category slugs are the `engName` values returned by `getCategories()`.
+
+#### Comments
+
+note.com runs two comment systems. Notes with `capabilities.note_comment === true` (most notes
+published since late 2025) only return comments from `getNoteComments`; older notes only from
+`getComments`.
+
+```ts
+import { noteCommentToText } from "note-api-client";
+
+const note = await client.getNoteDetail({ key: "n7070cd22a1e3" });
+
+if (note.capabilities.note_comment) {
+  let page: number | null = 1;
+  while (page) {
+    const res = await client.getNoteComments({ key: note.key, page, perPage: 50 });
+    for (const c of res.comments) {
+      console.log(c.user.nickname, noteCommentToText(c.comment));
+      if (c.reply_count > 0) {
+        const replies = await client.getNoteComments({ key: note.key, parentKey: c.key, order: "oldest" });
+        console.log(replies.comments.length, "replies");
+      }
+    }
+    page = res.next_page;
+  }
+} else {
+  // Legacy: 50 comments per call, newest first. Page with maxId.
+  let maxId: number | undefined;
+  for (;;) {
+    const res = await client.getComments({ id: note.id, maxId });
+    res.comments.forEach((c) => console.log(c.user.nickname, c.comment));
+    if (res.rest_comment_count === 0 || res.comments.length === 0) break;
+    maxId = Math.min(...res.comments.map((c) => c.id));
+  }
+}
+```
 
 ### Users
 
@@ -227,7 +265,9 @@ are thrown as `NoteAPIError` too.
 ## Low-level access
 
 `client.get / post / put / delete / request` send arbitrary requests with the same headers,
-cookies and error handling. They return `unknown` unless you pass a type:
+cookies, retries and error handling and return the response's `data` field (`requestBody` returns
+the whole body, for endpoints that put paging info next to `data`). They return `unknown` unless
+you pass a type:
 
 ```ts
 const top = await client.get<{ articles: { key: string; name: string }[]; next_page: number | null }>(
@@ -246,6 +286,8 @@ const top = await client.get<{ articles: { key: string; name: string }[]; next_p
 - `editNote` only sends `eyecatch_image_key` when `eyecatchImageKey` is given (it used to send `null`).
 - `getContests()` without `order` returns the newest contests first; pass `order: "priority"` for the old order.
 - `getHashtags` always rejects (endpoint removed by note.com).
+- `getComments` returns no comments for notes with `capabilities.note_comment === true`; use
+  `getNoteComments` (added in 0.1.2). Legacy notes with more than 50 comments can be paged with `maxId`.
 - The library no longer calls `dotenv.config()`; load your `.env` yourself.
 - Errors are `NoteAPIError` instances instead of plain `Error`.
 
